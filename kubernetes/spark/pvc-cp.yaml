@@ -1,0 +1,20 @@
+# pvc에 파일 복사용으로 pod 생성할때 사용하는 yaml 파일이다.
+# Example : kubectl cp ./spark/kafka-streaming.py spark-operator/file-cp-pod:/mnt/ceph-pvc/kafka-streaming.py
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: file-cp-pod
+  namespace: spark-operator
+spec:
+  containers:
+  - name: file-cp-container
+    image: busybox
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - mountPath: /mnt/ceph-pvc
+      name: ceph-pvc
+  volumes:
+  - name: ceph-pvc
+    persistentVolumeClaim:
+      claimName: file-cp-pvc

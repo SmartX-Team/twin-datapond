@@ -1,0 +1,14 @@
+ # Kafka Cluster에서 새로운 Topic 생성하는 파일
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: video-topic
+  namespace: strimzi-kafka-operator
+  labels:
+    strimzi.io/cluster: kafka-cluster
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    max.message.bytes: 10485760

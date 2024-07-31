@@ -1,0 +1,17 @@
+ # Kafka Cluster 외부 접근용 IP 및 Port 개방
+ # Example: kubectl get svc -n strimzi-kafka-operator
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-external-service
+  namespace: strimzi-kafka-operator
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 9094
+      targetPort: 9094
+      protocol: TCP
+  selector:
+    strimzi.io/cluster: kafka-cluster
+    strimzi.io/name: kafka-cluster-kafka
