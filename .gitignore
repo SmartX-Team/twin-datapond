@@ -2,6 +2,9 @@
 # config 파일
 config.json
 
+# secret file
+postgres-secret.yaml
+
 # 코드 테스트 처리용으로 생성된 데이터
 *.csv
 *.jpg

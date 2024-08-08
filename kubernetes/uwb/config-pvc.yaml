@@ -1,0 +1,37 @@
+# name-twin 에서 pod들끼리 보안상 민감한 ConfigFile 공유용 pvc 
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: config-pvc
+  namespace: name-twin
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ceph-filesystem
+
+---
+
+  # pvc에 파일 복사용으로 pod 생성할때 사용하는 yaml 파일이다.
+# Example : kubectl cp /home/netai/twin-datapond/kubernetes/uwb/config.json name-twin/file-cp-pod:/mnt/ceph-pvc/config.json
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: file-cp-pod
+  namespace: name-twin
+spec:
+  containers:
+  - name: file-cp-container
+    image: busybox
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - mountPath: /mnt/ceph-pvc
+      name: ceph-pvc
+  volumes:
+  - name: ceph-pvc
+    persistentVolumeClaim:
+      claimName: config-pvc

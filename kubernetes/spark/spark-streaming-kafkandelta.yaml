@@ -1,19 +1,20 @@
 # pvc 로 파일 복사하고 spark-operator 로 경로 인식해서 Spark 실행할 수 있나 테스트
+# 델타 레이크로 MinIO 기반 S3 스토리지까지 적재되는지 테스트용
 
 
 apiVersion: "sparkoperator.k8s.io/v1beta2"
 kind: SparkApplication
 metadata:
-  name: kafka-streaming
+  name: kafka-streaming-delta
   namespace: spark-operator
 spec:
   type: Python
   pythonVersion: "3"
   mode: cluster
-  image: "docker.io/ttyy441/my-spark:3.5.1"
+  image: "docker.io/ttyy441/my-spark:3.5.3"
   imagePullPolicy: Always
-  #mainApplicationFile: local:///mnt/ceph-pvc/kafka-streaming.py  # 마운드한 PVC 경로에 CP 한 파일
-  mainApplicationFile: local:///mnt/ceph-pvc/srv/test/kafka-streaming.py  # 마운드한 PVC 경로에 CP 한 파일
+  #mainApplicationFile: local:///mnt/ceph-pvc/kafka-streaming-delta.py  # 마운드한 PVC 경로에 CP 한 파일
+  mainApplicationFile: local:///mnt/ceph-pvc/srv/test/kafka-streaming-delta.py  # 마운드한 PVC 경로에 CP 한 파일
   sparkVersion: "3.5.0"
   restartPolicy:
     type: OnFailure
@@ -28,21 +29,28 @@ spec:
     labels:
       version: 3.5.0
     serviceAccount: spark-operator-spark
+    javaOptions: "-Dcom.amazonaws.sdk.disableCertChecking=true"
     volumeMounts:
       - name: ceph-pvc
         mountPath: /mnt/ceph-pvc  # PVC 마운트 경로
   executor:
     cores: 1
     instances: 1
-    memory: "1G"
+    memory: "2G"
     labels:
       version: 3.5.0
+    javaOptions: "-Dcom.amazonaws.sdk.disableCertChecking=true"
   deps:
     jars:
       - local:///opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.1.jar
       - local:///opt/spark/jars/kafka-clients-3.5.2.jar
       - local:///opt/spark/jars/commons-pool2-2.11.1.jar
       - local:///opt/spark/jars/spark-token-provider-kafka-0-10_2.12-3.5.1.jar
+      - local:///opt/spark/jars/delta-core_2.12-2.1.0.jar
+      - local:///opt/spark/jars/delta-spark_2.12-3.2.0.jar
+      - local:///opt/spark/jars/delta-storage-3.2.0.jar
+      - local:///opt/spark/jars/hadoop-aws-3.3.4.jar
+      - local:///opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
   volumes:
     - name: ceph-pvc
       persistentVolumeClaim:

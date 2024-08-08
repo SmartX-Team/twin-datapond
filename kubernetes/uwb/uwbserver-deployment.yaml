@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uwb-rlts-deployment
+  namespace: name-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uwb-rlts
+  template:
+    metadata:
+      labels:
+        app: uwb-rlts
+    spec:
+      containers:
+      - name: uwb-rlts
+        image: ttyy441/uwb_rlts:1.0.2 # 기존에 docker-compose 로 로컬에서 실행하던 도커 이미지 허브에 배포해둠
+        volumeMounts:
+        - name: config-volume
+          mountPath: /mnt/ceph-pvc  # 컨테이너 내에서 PVC를 마운트하는 경로
+      volumes:
+      - name: config-volume
+        persistentVolumeClaim:
+          claimName: config-pvc

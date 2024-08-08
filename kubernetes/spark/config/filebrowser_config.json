@@ -1,0 +1,8 @@
+{
+    "port": 80,
+    "address": "",
+    "log": "stdout",
+    "database": "/mnt/ceph-pvc/database.db",
+    "root": "/mnt/ceph-pvc/srv"
+  }
+  

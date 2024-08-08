@@ -3,7 +3,7 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: video-topic
+  name: omniverse-uwb
   namespace: strimzi-kafka-operator
   labels:
     strimzi.io/cluster: kafka-cluster
@@ -11,4 +11,5 @@ spec:
   partitions: 3
   replicas: 1
   config:
-    max.message.bytes: 10485760
+    max.message.bytes: 10485760 # Message Size
+    retention.ms: 60000 # 1 minute
