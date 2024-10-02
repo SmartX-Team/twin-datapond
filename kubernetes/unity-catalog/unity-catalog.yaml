@@ -1,0 +1,144 @@
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: catalog-pvc
+  namespace: mobilex-twin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: ceph-block
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: catalog-ui-pvc
+  namespace: mobilex-twin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: ceph-block
+
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unitycatalog
+  namespace: mobilex-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unitycatalog
+  template:
+    metadata:
+      labels:
+        app: unitycatalog
+    spec:
+      containers:
+      - name: unitycatalog
+        image: ttyy441/unitycatalog:0.2.0-SNAPSHOT
+        volumeMounts:
+        - mountPath: "/mnt/ceph-pvc"
+          name: cephfs-storage
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+      volumes:
+      - name: cephfs-storage
+        persistentVolumeClaim:
+          claimName: catalog-pvc
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unitycatalog-ui
+  namespace: mobilex-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unitycatalog-ui
+  template:
+    metadata:
+      labels:
+        app: unitycatalog-ui
+    spec:
+      containers:
+      - name: unitycatalog-ui
+        image: ttyy441/unitycatalog-ui:0.2.2
+        volumeMounts:
+        - mountPath: "/mnt/ceph-pvc"
+          name: cephfs-storage
+        ports:
+        - containerPort: 3000
+        env:
+        - name: PROXY_URL
+          value: "unitycatalog-service.mobilex-twin.svc.ops.openark:8081"
+      volumes:
+      - name: cephfs-storage
+        persistentVolumeClaim:
+          claimName: catalog-ui-pvc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: unitycatalog-service
+  namespace: mobilex-twin
+spec:
+  selector:
+    app: unitycatalog
+  ports:
+  - protocol: TCP
+    port: 8080         # Service가 노출할 첫 번째 포트
+    targetPort: 8080   # Deployment의 첫 번째 포트
+    name: http-port
+  - protocol: TCP
+    port: 8081         # Service가 노출할 두 번째 포트
+    targetPort: 8081   # Deployment의 두 번째 포트
+    name: access-port
+  - protocol: TCP
+    port: 3000        # Service가 노출할 두 번째 포트
+    targetPort: 3000   # Deployment의 두 번째 포트
+    name: ui-port
+  type: LoadBalancer          
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: unitycatalog-ui-service
+  namespace: mobilex-twin
+spec:
+  selector:
+    app: unitycatalog-ui
+  ports:
+  - protocol: TCP
+    port: 8080         # Service가 노출할 첫 번째 포트
+    targetPort: 8080   # Deployment의 첫 번째 포트
+    name: http-port
+  - protocol: TCP
+    port: 8081         # Service가 노출할 두 번째 포트
+    targetPort: 8081   # Deployment의 두 번째 포트
+    name: access-port
+  - protocol: TCP
+    port: 3000        # Service가 노출할 두 번째 포트
+    targetPort: 3000   # Deployment의 두 번째 포트
+    name: ui-port
+  type: LoadBalancer          

@@ -13,6 +13,16 @@ spec:
       labels:
         app: kafdrop
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - d0663000-9770-11e9-8000-3cecef55ef5c  # 첫 번째 노드
+                      - d15f2200-936a-11e9-8000-3cecef55f0e8  # 두 번째 노드
       containers:
         - name: kafdrop
           image: obsidiandynamics/kafdrop:latest
@@ -21,3 +31,10 @@ spec:
           env:
             - name: KAFKA_BROKER_CONNECT
               value: "kafka-cluster-kafka-bootstrap:9092"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "3Gi"
+              cpu: "2"
