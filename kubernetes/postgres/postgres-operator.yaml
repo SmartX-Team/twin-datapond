@@ -9,6 +9,9 @@ spec:
     matchLabels:
       app: postgres
   template:
+    spec:
+      nodeSelector: {}
+  template:
     metadata:
       labels:
         app: postgres

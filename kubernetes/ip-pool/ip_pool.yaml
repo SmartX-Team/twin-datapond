@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: dt-external-ip-pool
+  labels:
+    ark.ulagbulag.io/is-dt-external: "true"
+spec:
+  blocks:
+  - cidr: 10.79.1.0/24
+  disabled: false
+  serviceSelector:
+    matchExpressions:
+    - key: ark.ulagbulag.io/is-dt-external
+      operator: In
+      values:
+      - "true"
+    - key: ark.ulagbulag.io/is-private
+      operator: DoesNotExist

@@ -6,6 +6,8 @@ kind: Service
 metadata:
   name: kafka-external-service
   namespace: strimzi-kafka-operator
+  labels:
+    ark.ulagbulag.io/is-external: "true"  
 spec:
   type: LoadBalancer
   ports:

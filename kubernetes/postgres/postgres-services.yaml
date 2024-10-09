@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: postgres
   namespace: name-twin
+  labels:
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"  
 spec:
   ports:
   - port: 5432

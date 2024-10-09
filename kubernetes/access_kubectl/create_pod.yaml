@@ -1,0 +1,124 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-collector
+  namespace: name-twin
+  labels:
+    app: resource-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resource-collector
+  template:
+    metadata:
+      labels:
+        app: resource-collector
+    spec:
+      serviceAccountName: resource-viewer
+      containers:
+      - name: resource-collector
+        image: python:3.9
+        ports:
+        - containerPort: 8080
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          mkdir -p /app
+          cat << 'EOF' > /app/script.py
+          import subprocess
+          import json
+          from http.server import HTTPServer, BaseHTTPRequestHandler
+          from datetime import datetime
+
+          def get_simplified_data(resource_type):
+              result = subprocess.run(['kubectl', 'get', resource_type, '-o', 'json'], capture_output=True, text=True)
+              data = json.loads(result.stdout)
+              simplified = []
+              for item in data['items']:
+                  simplified_item = {
+                      'name': item['metadata']['name'],
+                  }
+                  if resource_type == 'nodes':
+                      simplified_item['status'] = item['status'].get('conditions', [{}])[-1].get('type', 'N/A')
+                      simplified_item['roles'] = ','.join([role.replace('node-role.kubernetes.io/', '') for role in item['metadata'].get('labels', {}) if role.startswith('node-role.kubernetes.io/')])
+                      simplified_item['age'] = get_age(item['metadata']['creationTimestamp'])
+                      simplified_item['version'] = item['status'].get('nodeInfo', {}).get('kubeletVersion', 'N/A')
+                  elif resource_type == 'boxes':
+                      simplified_item['alias'] = item['metadata'].get('annotations', {}).get('dt.ark.ulagbulag.io/alias', 'N/A')
+                      simplified_item['rack'] = item['spec'].get('metadata', {}).get('rack', 'N/A')
+                      simplified_item['address'] = item['status'].get('access', {}).get('primary', {}).get('address', 'N/A')
+                      simplified_item['power'] = item['status'].get('power', 'N/A')
+                      simplified_item['cluster'] = item['spec'].get('metadata', {}).get('cluster', 'N/A')
+                      simplified_item['role'] = item['spec'].get('group', {}).get('role', 'N/A')
+                      simplified_item['state'] = item['status'].get('state', 'N/A')
+                      simplified_item['created_at'] = item['metadata'].get('creationTimestamp', 'N/A')
+                      simplified_item['updated_at'] = item['metadata'].get('creationTimestamp', 'N/A')
+                      simplified_item['network_speed'] = item['status'].get('network', {}).get('speed', 'N/A')
+                      simplified_item['version'] = item['status'].get('version', 'N/A')
+                  simplified.append(simplified_item)
+              return simplified
+
+          def get_age(timestamp):
+              creation_time = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
+              age = datetime.utcnow() - creation_time
+              days = age.days
+              hours, remainder = divmod(age.seconds, 3600)
+              minutes, _ = divmod(remainder, 60)
+              if days > 0:
+                  return f"{days}d"
+              elif hours > 0:
+                  return f"{hours}h"
+              else:
+                  return f"{minutes}m"
+
+          class Handler(BaseHTTPRequestHandler):
+              def do_GET(self):
+                  if self.path == '/nodes':
+                      data = get_simplified_data('nodes')
+                  elif self.path == '/boxes':
+                      data = get_simplified_data('boxes')
+                  else:
+                      self.send_error(404)
+                      return
+
+                  self.send_response(200)
+                  self.send_header('Content-type', 'application/json')
+                  self.end_headers()
+                  self.wfile.write(json.dumps(data, indent=2).encode())
+
+          if __name__ == "__main__":
+              print("Server starting on port 8080...")
+              httpd = HTTPServer(('', 8080), Handler)
+              httpd.serve_forever()
+          EOF
+          apt-get update && apt-get install -y curl
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          mv kubectl /usr/local/bin/
+          pip install kubernetes
+          python /app/script.py
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: restart-resource-collector
+  namespace: name-twin
+spec:
+  schedule: "0 0 * * *"  # 매일 자정에 재실행
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: resource-viewer
+          containers:
+          - name: kubectl
+            image: bitnami/kubectl
+            command:
+            - /bin/sh
+            - -c
+            - kubectl rollout restart deployment/resource-collector -n name-twin
+          restartPolicy: OnFailure

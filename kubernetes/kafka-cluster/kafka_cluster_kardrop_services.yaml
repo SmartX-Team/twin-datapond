@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: kafdrop
   namespace: strimzi-kafka-operator
+  labels:
+    ark.ulagbulag.io/is-external: "true"
 spec:
   type: LoadBalancer
   ports:
