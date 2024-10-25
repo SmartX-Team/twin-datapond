@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: volume-debugger
+  namespace: sewio-uwb
+spec:
+  volumes:
+  - name: mysql-storage
+    persistentVolumeClaim:
+      claimName: mysql-storage
+  containers:
+  - name: debugger
+    image: busybox
+    command: ['sleep', '3600']
+    volumeMounts:
+    - name: mysql-storage
+      mountPath: /dbdata

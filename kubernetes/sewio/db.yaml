@@ -1,0 +1,154 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "4"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"4"},"creationTimestamp":"2024-10-09T18:23:50Z","generation":4,"name":"db","namespace":"sewio-uwb","resourceVersion":"1081909075","uid":"3b63dc17-755b-45af-a53d-33193faaaf41"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"name":"db"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"name":"db"}},"spec":{"affinity":{"nodeAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"preference":{"matchExpressions":[{"key":"node-role.kubernetes.io/kiss-ephemeral-control-plane","operator":"DoesNotExist"}]},"weight":1}],"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"node-role.kubernetes.io/kiss","operator":"In","values":["ControlPlane"]}]}]}}},"containers":[{"env":[{"name":"MYSQL_USER","value":"laravel_user"},{"name":"MYSQL_PASSWORD_FILE","value":"/run/secrets/db_password"},{"name":"MYSQL_ROOT_USERNAME","value":"sewiortls"},{"name":"MYSQL_ROOT_PASSWORD_FILE","value":"/run/secrets/db_root_password"},{"name":"INTERNAL_API_KEY_FILE","value":"/run/secrets/internal_api_key"}],"image":"quay.io/netaiy/sewio-uwb-sewiodb:3.1.0","imagePullPolicy":"IfNotPresent","name":"db","ports":[{"containerPort":3306,"name":"db","protocol":"TCP"}],"resources":{},"securityContext":{"capabilities":{"add":["CAP_SYS_NICE"]}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/docker-entrypoint-initdb.d","name":"db-dump"},{"mountPath":"/docker-entrypoint-initdb.d/migrate","name":"db-dump-migrate-writable","subPath":"src"},{"mountPath":"/var/lib/mysql","name":"persistent-mysql"},{"mountPath":"/run/secrets/db_password","name":"secret","subPath":"db_password.txt"},{"mountPath":"/var/run/mysqld","name":"mysqld-run"},{"mountPath":"/run/secrets/db_root_password","name":"secret","subPath":"db_root_password.txt"},{"mountPath":"/run/secrets/internal_api_key","name":"secret","subPath":"internal_api_key.txt"}]}],"dnsPolicy":"ClusterFirst","imagePullSecrets":[{"name":"ark-registry"}],"initContainers":[{"args":["/src","/dst"],"command":["cp","-r"],"image":"docker.io/library/busybox:latest","imagePullPolicy":"Always","name":"init-copy-writeable-files","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/src","name":"db-dump-migrate"},{"mountPath":"/dst","name":"db-dump-migrate-writable"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"configMap":{"defaultMode":420,"name":"db-dump"},"name":"db-dump"},{"configMap":{"defaultMode":420,"name":"db-dump-migrate"},"name":"db-dump-migrate"},{"emptyDir":{},"name":"db-dump-migrate-writable"},{"name":"persistent-mysql","persistentVolumeClaim":{"claimName":"mysql-storage"}},{"emptyDir":{},"name":"mysqld-run"},{"name":"secret","secret":{"defaultMode":420,"secretName":"uwb"}}]}}},"status":{"conditions":[{"lastTransitionTime":"2024-10-09T18:23:50Z","lastUpdateTime":"2024-10-09T19:25:14Z","message":"ReplicaSet \"db-779d8b64dc\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"},{"lastTransitionTime":"2024-10-09T19:25:15Z","lastUpdateTime":"2024-10-09T19:25:15Z","message":"Deployment does not have minimum availability.","reason":"MinimumReplicasUnavailable","status":"False","type":"Available"}],"observedGeneration":4,"replicas":1,"unavailableReplicas":1,"updatedReplicas":1}}
+  creationTimestamp: "2024-10-09T18:23:50Z"
+  generation: 5
+  name: db
+  namespace: sewio-uwb
+  resourceVersion: "1081929888"
+  uid: 3b63dc17-755b-45af-a53d-33193faaaf41
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: db
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: db
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                operator: DoesNotExist
+            weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                - ControlPlane
+      containers:
+      - env:
+        - name: MYSQL_USER
+          value: laravel_user
+        - name: MYSQL_PASSWORD_FILE
+          value: /run/secrets/db_password
+        - name: MYSQL_ROOT_USERNAME
+          value: sewiortls
+        - name: MYSQL_ROOT_PASSWORD_FILE
+          value: /run/secrets/db_root_password
+        - name: INTERNAL_API_KEY_FILE
+          value: /run/secrets/internal_api_key
+        image: quay.io/netaiy/sewio-uwb-sewiodb:3.1.0
+        imagePullPolicy: IfNotPresent
+        name: db
+        ports:
+        - containerPort: 3306
+          name: db
+          protocol: TCP
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - CAP_SYS_NICE
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /docker-entrypoint-initdb.d
+          name: db-dump
+        - mountPath: /docker-entrypoint-initdb.d/migrate
+          name: db-dump-migrate-writable
+          subPath: src
+        - mountPath: /var/lib/mysql
+          name: persistent-mysql
+        - mountPath: /run/secrets/db_password
+          name: secret
+          subPath: db_password.txt
+        - mountPath: /var/run/mysqld
+          name: mysqld-run
+        - mountPath: /run/secrets/db_root_password
+          name: secret
+          subPath: db_root_password.txt
+        - mountPath: /run/secrets/internal_api_key
+          name: secret
+          subPath: internal_api_key.txt
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: ark-registry
+      initContainers:
+      - args:
+        - /src
+        - /dst
+        command:
+        - cp
+        - -r
+        image: docker.io/library/busybox:latest
+        imagePullPolicy: Always
+        name: init-copy-writeable-files
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /src
+          name: db-dump-migrate
+        - mountPath: /dst
+          name: db-dump-migrate-writable
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: db-dump
+        name: db-dump
+      - configMap:
+          defaultMode: 420
+          name: db-dump-migrate
+        name: db-dump-migrate
+      - emptyDir: {}
+        name: db-dump-migrate-writable
+      - name: persistent-mysql
+        persistentVolumeClaim:
+          claimName: mysql-storage
+      - emptyDir: {}
+        name: mysqld-run
+      - name: secret
+        secret:
+          defaultMode: 420
+          secretName: uwb
+status:
+  conditions:
+  - lastTransitionTime: "2024-10-09T18:23:50Z"
+    lastUpdateTime: "2024-10-09T19:25:14Z"
+    message: ReplicaSet "db-779d8b64dc" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2024-10-09T19:32:36Z"
+    lastUpdateTime: "2024-10-09T19:32:36Z"
+    message: Deployment does not have minimum availability.
+    reason: MinimumReplicasUnavailable
+    status: "False"
+    type: Available
+  observedGeneration: 5
+  replicas: 1
+  unavailableReplicas: 1
+  updatedReplicas: 1

@@ -1,0 +1,19 @@
+# 임시로 도커 허브에 백업용 pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: registry-backup
+  namespace: ark
+spec:
+  containers:
+  - name: backup
+    image: docker:dind
+    securityContext:
+      privileged: true
+    command: ["sh", "-c", "dockerd &>/dev/null & sleep infinity"]
+    volumeMounts:
+    - name: backup-data
+      mountPath: /backup
+  volumes:
+  - name: backup-data
+    emptyDir: {}

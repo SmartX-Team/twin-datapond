@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vnc-test-pod
+  namespace: default
+spec:
+  containers:
+  - name: vnc-tester
+    image: python:3.9-slim
+    command: ["/bin/sh"]
+    args: ["-c", "pip install python-vnc-client && python /app/vnc_test.py"]
+    env:
+    - name: VNC_HOST
+      value: "10.66.42.155"
+    - name: VNC_PORT
+      value: "5900"
+    volumeMounts:
+    - name: script-volume
+      mountPath: /app
+  volumes:
+  - name: script-volume
+    configMap:
+      name: vnc-test-script
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vnc-test-script
+  namespace: default
+data:
+  vnc_test.py: |
+    import socket
+    import time
+    from vncdotool import api
+
+    VNC_HOST = "10.66.42.155"
+    VNC_PORT = 5900
+
+    def test_vnc_connection():
+        print(f"Attempting to connect to VNC server at {VNC_HOST}:{VNC_PORT}")
+        
+        # First, test if the port is open
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex((VNC_HOST, VNC_PORT))
+        if result == 0:
+            print("Port is open")
+        else:
+            print(f"Port is not open. Error code: {result}")
+            return
+        
+        sock.close()
+
+        # Now, try to establish a VNC connection
+        try:
+            client = api.connect(f'{VNC_HOST}::{VNC_PORT}')
+            print("Successfully connected to VNC server")
+            client.disconnect()
+        except Exception as e:
+            print(f"Failed to connect to VNC server. Error: {str(e)}")
+
+    while True:
+        test_vnc_connection()
+        time.sleep(60)  # Wait for 60 seconds before next attempt

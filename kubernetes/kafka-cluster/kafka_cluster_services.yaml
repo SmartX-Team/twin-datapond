@@ -11,8 +11,21 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 9094
+    - name: main 
+      port: 9094
       targetPort: 9094
+      protocol: TCP
+    - name: broker-0
+      port: 9095
+      targetPort: 9095
+      protocol: TCP
+    - name: broker-1
+      port: 9096
+      targetPort: 9096
+      protocol: TCP
+    - name: broker-2
+      port: 9097
+      targetPort: 9097
       protocol: TCP
   selector:
     strimzi.io/cluster: kafka-cluster

@@ -52,6 +52,9 @@ kind: Service
 metadata:
   name: filebrowser
   namespace: spark-operator
+  labels:
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"  
 spec:
   selector:
     app: filebrowser

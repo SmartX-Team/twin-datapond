@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-deployment
+  namespace: vine-session-name-wow20
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busybox
+  template:
+    metadata:
+      labels:
+        app: busybox
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: ark.ulagbulag.io/bind
+                operator: In
+                values:
+                - "true"
+              - key: ark.ulagbulag.io/bind.namespace
+                operator: In
+                values:
+                - vine-session-name-wow20
+              - key: ark.ulagbulag.io/bind.user
+                operator: In
+                values:
+                - name-wow20
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - c2136df7-8483-22eb-3210-1c697ad99e00
+      containers:
+      - name: busybox
+        image: busybox
+        command: ["sleep", "3600"]

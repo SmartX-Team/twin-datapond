@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "8"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"7"},"creationTimestamp":"2023-05-27T09:04:19Z","generation":7,"name":"phpmyadmin","namespace":"sewio-uwb","resourceVersion":"1004704824","uid":"a7eef45e-dd53-4171-b925-5fe3617af9e6"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"name":"phpmyadmin"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":1},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"2024-08-28T19:01:44+09:00"},"creationTimestamp":null,"labels":{"name":"phpmyadmin"}},"spec":{"affinity":{"nodeAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"preference":{"matchExpressions":[{"key":"node-role.kubernetes.io/kiss-ephemeral-control-plane","operator":"DoesNotExist"}]},"weight":1}],"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"node-role.kubernetes.io/kiss","operator":"In","values":["ControlPlane"]},{"key":"node-role.kubernetes.io/sewio-uwb","operator":"Exists"}]}]}}},"containers":[{"env":[{"name":"PMA_HOST","value":"db"},{"name":"PMA_PORT","value":"3306"},{"name":"MYSQL_USER","value":"laravel_user"},{"name":"MYSQL_PASSWORD_FILE","value":"/run/secrets/db_password"},{"name":"MYSQL_ROOT_PASSWORD_FILE","value":"/run/secrets/db_root_password"},{"name":"PMA_ABSOLUTE_URI","value":"/"},{"name":"PMA_ABSOLUTE_URI_OLD","value":"/phpmyadmin-d/"}],"image":"quay.io/netaiy/sewio-uwb-sewiodb:latest","imagePullPolicy":"Always","name":"phpmyadmin","ports":[{"containerPort":80,"name":"http","protocol":"TCP"}],"resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/run/secrets/db_password","name":"secret","subPath":"db_password.txt"},{"mountPath":"/run/secrets/db_root_password","name":"secret","subPath":"db_root_password.txt"}]}],"dnsPolicy":"ClusterFirst","imagePullSecrets":[{"name":"ark-registry"}],"initContainers":[{"args":["echo madvise \u003e/host/sys/kernel/mm/transparent_hugepage/enabled \u0026\u0026 echo 0 \u003e /host/proc/sys/vm/nr_hugepages\n"],"command":["sh","-c"],"image":"docker.io/library/busybox:latest","imagePullPolicy":"Always","name":"disable-thp","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/host/proc","name":"host-proc"},{"mountPath":"/host/sys","name":"host-sys"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"hostPath":{"path":"/proc","type":""},"name":"host-proc"},{"hostPath":{"path":"/sys","type":""},"name":"host-sys"},{"name":"secret","secret":{"defaultMode":420,"secretName":"uwb"}}]}}},"status":{"conditions":[{"lastTransitionTime":"2023-05-27T09:04:19Z","lastUpdateTime":"2023-05-27T09:04:19Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2023-05-27T09:04:19Z","lastUpdateTime":"2024-08-28T10:01:52Z","message":"ReplicaSet \"phpmyadmin-5f8f7d5b99\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":7,"replicas":1,"unavailableReplicas":1,"updatedReplicas":1}}
+  creationTimestamp: "2023-05-27T09:04:19Z"
+  generation: 8
+  name: phpmyadmin
+  namespace: sewio-uwb
+  resourceVersion: "1081602889"
+  uid: a7eef45e-dd53-4171-b925-5fe3617af9e6
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: phpmyadmin
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2024-08-28T19:01:44+09:00"
+      creationTimestamp: null
+      labels:
+        name: phpmyadmin
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                operator: DoesNotExist
+            weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                - ControlPlane
+              - key: node-role.kubernetes.io/sewio-uwb
+                operator: Exists
+      containers:
+      - env:
+        - name: PMA_HOST
+          value: db
+        - name: PMA_PORT
+          value: "3306"
+        - name: MYSQL_USER
+          value: laravel_user
+        - name: MYSQL_PASSWORD_FILE
+          value: /run/secrets/db_password
+        - name: MYSQL_ROOT_PASSWORD_FILE
+          value: /run/secrets/db_root_password
+        - name: PMA_ABSOLUTE_URI
+          value: /
+        - name: PMA_ABSOLUTE_URI_OLD
+          value: /phpmyadmin-d/
+        image: quay.io/netaiy/sewio-uwb-phpmyadmin:latest
+        imagePullPolicy: Always
+        name: phpmyadmin
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /run/secrets/db_password
+          name: secret
+          subPath: db_password.txt
+        - mountPath: /run/secrets/db_root_password
+          name: secret
+          subPath: db_root_password.txt
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: ark-registry
+      initContainers:
+      - args:
+        - |
+          echo madvise >/host/sys/kernel/mm/transparent_hugepage/enabled && echo 0 > /host/proc/sys/vm/nr_hugepages
+        command:
+        - sh
+        - -c
+        image: docker.io/library/busybox:latest
+        imagePullPolicy: Always
+        name: disable-thp
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /host/proc
+          name: host-proc
+        - mountPath: /host/sys
+          name: host-sys
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /proc
+          type: ""
+        name: host-proc
+      - hostPath:
+          path: /sys
+          type: ""
+        name: host-sys
+      - name: secret
+        secret:
+          defaultMode: 420
+          secretName: uwb
+status:
+  conditions:
+  - lastTransitionTime: "2023-05-27T09:04:19Z"
+    lastUpdateTime: "2023-05-27T09:04:19Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2023-05-27T09:04:19Z"
+    lastUpdateTime: "2024-10-09T17:40:36Z"
+    message: ReplicaSet "phpmyadmin-85d6c77d8d" is progressing.
+    reason: ReplicaSetUpdated
+    status: "True"
+    type: Progressing
+  observedGeneration: 8
+  replicas: 1
+  unavailableReplicas: 1
+  updatedReplicas: 1

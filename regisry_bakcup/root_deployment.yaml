@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    meta.helm.sh/release-name: registry
+    meta.helm.sh/release-namespace: ark
+  creationTimestamp: "2023-07-25T10:08:57Z"
+  generation: 1
+  labels:
+    app: docker-registry
+    app.kubernetes.io/managed-by: Helm
+    chart: docker-registry-2.2.2
+    heritage: Helm
+    release: registry
+  name: registry
+  namespace: ark
+  resourceVersion: "1031130287"
+  uid: b2f93f89-c275-4f40-b520-474eb27b8d86
+spec:
+  minReadySeconds: 5
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: docker-registry
+      release: registry
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config: 62eb0c563e13f314f4c5f347bc61db50abcf60ad65e9349a8eaffb0e029beaff
+        checksum/secret: dcdd2946fc458b041ecb5d175f714bfcd1baf5b75795512bb8a05bc5613bc9b1
+      creationTimestamp: null
+      labels:
+        app: docker-registry
+        release: registry
+    spec:
+      containers:
+      - command:
+        - /bin/registry
+        - serve
+        - /etc/docker/registry/config.yml
+        env:
+        - name: REGISTRY_HTTP_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: haSharedSecret
+              name: registry-secret
+        - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+          value: /var/lib/registry
+        image: registry:2.8.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 5000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: docker-registry
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 5000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/docker/registry
+          name: registry-config
+        - mountPath: /var/lib/registry/
+          name: data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: registry-config
+        name: registry-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: registry
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2023-07-25T10:08:57Z"
+    lastUpdateTime: "2023-07-25T10:09:14Z"
+    message: ReplicaSet "registry-5b4557859d" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2024-09-27T19:17:22Z"
+    lastUpdateTime: "2024-09-27T19:17:22Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

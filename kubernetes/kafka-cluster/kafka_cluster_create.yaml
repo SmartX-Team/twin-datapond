@@ -16,6 +16,28 @@ spec:
         port: 9094
         type: loadbalancer
         tls: false
+        configuration:
+          # 각 브로커 서비스에 라벨 추가
+          brokers:
+            - broker: 0
+              advertisedHost: 210.125.85.70
+              advertisedPort: 9094
+              labels:
+                ark.ulagbulag.io/is-external: "true"
+            - broker: 1
+              advertisedHost: 210.125.85.71
+              advertisedPort: 9094
+              labels:
+                ark.ulagbulag.io/is-external: "true"
+            - broker: 2
+              advertisedHost: 210.125.85.69
+              advertisedPort: 9094            
+              labels:
+                ark.ulagbulag.io/is-external: "true"
+          # 부트스트랩 서비스에 라벨 추가
+          bootstrap:
+            labels:
+              ark.ulagbulag.io/is-external: "true"
     config:
       offsets.topic.replication.factor: 3
       transaction.state.log.replication.factor: 3
