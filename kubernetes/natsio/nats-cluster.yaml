@@ -1,0 +1,45 @@
+apiVersion: nats.io/v1alpha2
+kind: NatsCluster
+metadata:
+  name: nats-cluster
+  namespace: nats-io
+spec:
+  size: 3
+  version: "2.9.17"
+  natsConfig:
+    debug: true
+    trace: true
+    cluster:
+      name: "nats-cluster"
+      no_advertise: false
+      port: 6222
+      routes: [
+        "nats://nats-cluster-1.nats-cluster.nats-io.svc.ops.openark:6222",
+        "nats://nats-cluster-2.nats-cluster.nats-io.svc.ops.openark:6222",
+        "nats://nats-cluster-3.nats-cluster.nats-io.svc.ops.openark:6222"
+      ]
+    client:
+      port: 4222
+      host: "0.0.0.0"
+  pod:
+    enableConfigReload: true
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 1000m
+      limits:
+        memory: 4Gi
+        cpu: 2000m
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values:
+                    - d0663000-9770-11e9-8000-3cecef55ef5c
+                    - d15f2200-936a-11e9-8000-3cecef55f0e8

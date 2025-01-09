@@ -1,0 +1,5 @@
+helm install my-jaeger jaegertracing/jaeger \
+--namespace jaeger-system \     
+--set fullnameOverride=my-jaeger \
+--set storage.type=memory \
+--set spark.enabled=false

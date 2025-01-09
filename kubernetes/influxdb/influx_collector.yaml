@@ -1,0 +1,42 @@
+# 급해서 우선 대충 만듬
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-metrics-collector
+  namespace: name-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-metrics-collector
+  template:
+    metadata:
+      labels:
+        app: kafka-metrics-collector
+    spec:
+      containers:
+      - name: collector
+        image: python:3.9-slim
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          apt-get update && \
+          apt-get install -y gcc python3-dev && \
+          pip install requests pandas influxdb-client && \
+          python /data/collector.py
+        volumeMounts:
+        - name: collector-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: collector-storage
+        persistentVolumeClaim:
+          claimName: kafka-metrics-collector-pvc

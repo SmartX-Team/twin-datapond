@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-metrics
+  namespace: strimzi-kafka-operator
+data:
+  kafka-metrics-config.yml: |
+    lowercaseOutputName: true
+    rules:
+    # 기본 Kafka 메트릭
+    - pattern: kafka.server<type=(.+), name=(.+)PerSec\w*><>Count
+      name: kafka_server_$1_$2_total
+    - pattern: kafka.server<type=(.+), name=(.+)><>Value
+      name: kafka_server_$1_$2
+    # 브로커 메트릭
+    - pattern: kafka.server<type=KafkaServer, name=BrokerState><>Value
+      name: kafka_server_broker_state
+    # 토픽 & 파티션 메트릭
+    - pattern: kafka.server<type=ReplicaManager, name=PartitionCount><>Value
+      name: kafka_server_replica_manager_partition_count
+    # 컨슈머 그룹 메트릭
+    - pattern: kafka.server<type=GroupCoordinator, name=NumGroups><>Value
+      name: kafka_server_group_coordinator_num_groups
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zookeeper-metrics
+  namespace: strimzi-kafka-operator
+data:
+  zookeeper-metrics-config.yml: |
+    lowercaseOutputName: true
+    rules:
+      - pattern: "org.apache.zookeeper<name=(.+)><>Value"
+        name: zookeeper_$1
+        type: GAUGE
+        help: "Zookeeper metric $1"

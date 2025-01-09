@@ -8,6 +8,10 @@ metadata:
   namespace: strimzi-kafka-operator
   labels:
     ark.ulagbulag.io/is-external: "true"  
+    strimzi.io/kind: Kafka  # ServiceMonitor 선택을 위한 라벨 추가
+  annotations:
+    prometheus.io/scrape: "true"  # Prometheus 스크래핑 활성화
+    prometheus.io/port: "9404"    # JMX Exporter 포트
 spec:
   type: LoadBalancer
   ports:
@@ -27,6 +31,27 @@ spec:
       port: 9097
       targetPort: 9097
       protocol: TCP
+  selector:
+    strimzi.io/cluster: kafka-cluster
+    strimzi.io/name: kafka-cluster-kafka
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-metrics-service
+  namespace: strimzi-kafka-operator
+  labels:
+    app.kubernetes.io/component: kafka-metrics
+    app.kubernetes.io/instance: strimzi-kafka-operator.kafka-metrics
+    ark.ulagbulag.io/test-ip-pool: "true" 
+spec:
+  type: LoadBalancer
+  ports:
+    - name: prometheus
+      port: 9404
+      targetPort: 9404
   selector:
     strimzi.io/cluster: kafka-cluster
     strimzi.io/name: kafka-cluster-kafka

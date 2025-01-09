@@ -17,24 +17,16 @@ spec:
         type: loadbalancer
         tls: false
         configuration:
-          # 각 브로커 서비스에 라벨 추가
           brokers:
             - broker: 0
-              advertisedHost: 210.125.85.70
-              advertisedPort: 9094
               labels:
                 ark.ulagbulag.io/is-external: "true"
             - broker: 1
-              advertisedHost: 210.125.85.71
-              advertisedPort: 9094
               labels:
                 ark.ulagbulag.io/is-external: "true"
             - broker: 2
-              advertisedHost: 210.125.85.69
-              advertisedPort: 9094            
               labels:
                 ark.ulagbulag.io/is-external: "true"
-          # 부트스트랩 서비스에 라벨 추가
           bootstrap:
             labels:
               ark.ulagbulag.io/is-external: "true"
@@ -55,6 +47,12 @@ spec:
       limits:
         memory: 4Gi
         cpu: 2000m
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics
+          key: kafka-metrics-config.yml
     template:
       pod:
         affinity:
@@ -72,7 +70,7 @@ spec:
     storage:
       type: persistent-claim
       size: 10Gi
-      deleteClaim: false
+      deleteClaim: false  # 데이터 보존을 위해 false로 유지
       class: ceph-block
     resources:
       requests:

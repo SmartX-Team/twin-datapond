@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kafka-cluster-sm
+  namespace: monitoring     # Prometheus Operator가 감시하는 네임스페이스
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      strimzi.io/cluster: kafka-cluster
+      strimzi.io/name: kafka-cluster-kafka
+  namespaceSelector:
+    matchNames:
+      - strimzi-kafka-operator
+  endpoints:
+    - port: tcp-prometheus  # Kafka Pod에서 'prometheus' or 'tcp-prometheus' 등으로 노출되는 포트 이름
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s

@@ -1,0 +1,30 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: dt-otel-collector
+  namespace: opentelemetry-operator
+spec:
+  mode: deployment
+  # collector configuration (OpenTelemetry Collector config YAML)
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+
+    exporters:
+      otlp:
+        endpoint: dt-jaeger-collector.jaeger-system.svc.ops.openark:14250
+        tls:
+          insecure: true
+
+    processors:
+      batch: {}
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]

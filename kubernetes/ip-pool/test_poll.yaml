@@ -1,0 +1,14 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: test-10-80-ip-pool
+spec:
+  blocks:
+    - cidr: 10.80.0.0/24
+  disabled: false
+  serviceSelector:
+    matchExpressions:
+      - key: ark.ulagbulag.io/test-ip-pool
+        operator: In
+        values:
+          - "true"

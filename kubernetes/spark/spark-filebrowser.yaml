@@ -33,6 +33,13 @@ spec:
       labels:
         app: filebrowser
     spec:
+      initContainers:      # 초기화 컨테이너 추가
+      - name: init-config
+        image: busybox
+        command: ['sh', '-c', 'mkdir -p /mnt/ceph-pvc/config && if [ ! -f /mnt/ceph-pvc/config/filebrowser_config.json ]; then echo "{ \"port\": 80, \"baseURL\": \"\", \"database\": \"/mnt/ceph-pvc/database.db\", \"root\": \"/mnt/ceph-pvc\" }" > /mnt/ceph-pvc/config/filebrowser_config.json; fi']
+        volumeMounts:
+        - mountPath: "/mnt/ceph-pvc"
+          name: cephfs-storage
       containers:
       - name: filebrowser
         image: filebrowser/filebrowser
@@ -53,8 +60,7 @@ metadata:
   name: filebrowser
   namespace: spark-operator
   labels:
-    ark.ulagbulag.io/is-external: "true"
-    ark.ulagbulag.io/is-private: "true"  
+    ark.ulagbulag.io/test-ip-pool: "true"
 spec:
   selector:
     app: filebrowser

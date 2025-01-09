@@ -1,8 +1,13 @@
 # twin-datapond
-twin-datapond 및 Data Pipeline 를 K8S 에 배포할때 사용하는 예제 코드를 포함하고 있습니다.
+처음 twin-datapond 및 Data Pipeline 를 K8S 에 배포할때 사용한 yaml 들 모음이었는데, 현재는 Digital Twin Service를 위한 전반적인 인프라 YAML 들과 예제 코드를 포함하여 정리중인 Repository이다.  
+나중에 Repository 명을 변경해서 재분류 예정 
 
 kubernetes Folder : 배포할때 사용한 yaml 및 테스트용으로 사용해본 yaml 파일들 모두 포함되어 있습니다. 사용법은 WIKI 에
 examples : 쿠버네티스 위에 직접 배포와는 상관없이 여러 실험용 테스트 및 사용법을 같이 정리해둔 코드입니다.
+
+twin-datapond was initially a collection of YAMLs used for deploying twin-datapond and Data Pipeline to K8S. Currently, it is being reorganized as a repository that includes overall infrastructure YAMLs and example codes for Digital Twin Service.
+
+Planning to reclassify later by changing the Repository name
 
 ***
 

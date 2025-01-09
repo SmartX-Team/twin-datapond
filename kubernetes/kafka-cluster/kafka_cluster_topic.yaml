@@ -3,13 +3,13 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: falcon-xy
+  name: kafka-performance
   namespace: strimzi-kafka-operator
   labels:
     strimzi.io/cluster: kafka-cluster
 spec:
-  partitions: 1
-  replicas: 1
+  partitions: 3  # 1에서 3으로 수정
+  replicas: 3    # 1에서 3으로 수정
   config:
-    max.message.bytes: 20485760 # Message Size
-    retention.ms: 60000 # 1 minute
+    max.message.bytes: 20485760  # 약 20MB 메시지 크기
+    retention.ms: 60000          # 1분 보관

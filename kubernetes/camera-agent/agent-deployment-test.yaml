@@ -1,3 +1,5 @@
+#Camera Agent RTSP version Deployment
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,14 +38,26 @@ spec:
                 - c2136df7-8483-22eb-3210-1c697ad99e00
       containers:
       - name: agent
-        image: ttyy441/agent:0.2.0
+        image: ttyy441/agent:0.5.2
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
         env:
-        - name: VISIBILITY_SERVER_URL
-          value: "http://10.32.187.108:5111"
-        - name: RTSP_SERVER_IP
-          value: "rtsp_server_ip"  # 실제 RTSP 서버 IP로 변경 필요
-        - name: RTSP_SERVER_PORT
-          value: "8554"
+        - name: SERVER_IP
+          value: "10.80.0.13"
+        - name: SERVER_PORT
+          value: "5111"
+        - name: EXTERNAL_IP
+          value: "10.80.0.15"
+          #valueFrom:
+          #  fieldRef:
+          #    fieldPath: status.hostIP  # 노드의 IP 주소 사용
+        - name: EXTERNAL_PORT
+          value: "8554"  # NodePort에서 설정한 포트 번호
         securityContext:
           privileged: true 
         volumeMounts:
@@ -53,3 +67,26 @@ spec:
       - name: video-device
         hostPath:
           path: /dev/video0
+---
+# TCP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-service
+  namespace: vine-session-name-wow20
+  labels:
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"  
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local # 외부에서 들어온 요청을 로컬 노드에만 전달하도록 하는 설정
+  selector:
+    app: agent
+  ports:
+    - name: http
+      port: 8000        
+      targetPort: 8000  
+    - name: rtsp
+      port: 8554        
+      targetPort: 8554  
+      protocol: TCP

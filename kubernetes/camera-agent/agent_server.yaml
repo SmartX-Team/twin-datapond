@@ -1,0 +1,81 @@
+# Camera Agent Visibility Server 에 Deployment, SVC, ServiceMonitor
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-deployment
+  namespace: name-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vision-agent-visibility
+  template:
+    metadata:
+      labels:
+        app: vision-agent-visibility
+    spec:
+      containers:
+      - name: agent
+        image: ttyy441/agent_visibility:0.3.1
+        ports:
+        - containerPort: 5111
+        resources:
+          requests:
+            cpu: 150m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 5111
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 5111
+          initialDelaySeconds: 15
+          periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-service
+  namespace: name-twin
+  labels:
+    app: vision-agent-visibility
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"
+spec:
+  type: LoadBalancer
+  selector:
+    app: vision-agent-visibility
+  ports:
+    - name: http
+      port: 5111
+      targetPort: 5111
+      protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: agent-visibility-monitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: vision-agent-visibility
+  namespaceSelector:
+    matchNames:
+      - name-twin
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

@@ -1,0 +1,78 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb-pvc
+  namespace: name-twin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: ceph-block
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dt-influx
+  namespace: name-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dt-influx
+  template:
+    metadata:
+      labels:
+        app: dt-influx
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - d0663000-9770-11e9-8000-3cecef55ef5c
+                      - d15f2200-936a-11e9-8000-3cecef55f0e8
+      containers:
+        - name: influxdb
+          image: "influxdb:2.7"
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          ports:
+            - containerPort: 8086
+              name: influxdb
+          volumeMounts:
+            - name: influxdata
+              mountPath: /var/lib/influxdb2
+      volumes:
+        - name: influxdata
+          persistentVolumeClaim:
+            claimName: influxdb-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+  namespace: name-twin
+  labels:
+    ark.ulagbulag.io/test-ip-pool: "true"
+spec:
+  type: LoadBalancer
+  ports:
+    - name: influxdb
+      port: 8086
+      targetPort: 8086
+  selector:
+    app: dt-influx

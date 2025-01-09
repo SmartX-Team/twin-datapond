@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uwb-rlts-deployment
+  namespace: name-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uwb-rlts
+  template:
+    metadata:
+      labels:
+        app: uwb-rlts
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - d0663000-9770-11e9-8000-3cecef55ef5c
+                      - d15f2200-936a-11e9-8000-3cecef55f0e8
+      containers:
+      - name: uwb-rlts
+        image: ttyy441/uwb_rlts:1.0.4
+        volumeMounts:
+        - name: config-volume
+          mountPath: /mnt/ceph-pvc
+      volumes:
+      - name: config-volume
+        persistentVolumeClaim:
+          claimName: config-pvc

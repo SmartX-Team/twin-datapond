@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: puppygraph
+  namespace: name-twin
+  labels:
+    app: puppygraph
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: puppygraph
+  template:
+    metadata:
+      labels:
+        app: puppygraph
+    spec:
+      containers:
+      - name: puppygraph
+        image: puppygraph/puppygraph:stable
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081  # Web UI Port
+        - containerPort: 8182  # Gremlin Server Port
+        - containerPort: 7687  # Bolt Port
+        volumeMounts:
+        - name: puppygraph-storage
+          mountPath: /data  # Path where data is stored in PuppyGraph container
+      volumes:
+      - name: puppygraph-storage
+        persistentVolumeClaim:
+          claimName: puppygraph-pvc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: puppygraph-service
+  namespace: name-twin
+  labels:
+    app: puppygraph
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"  
+spec:
+  type: LoadBalancer
+  selector:
+    app: puppygraph
+  ports:
+  - name: web-ui
+    port: 8081               
+    targetPort: 8081 
+  - name: gremlin-server
+    port: 8182
+    targetPort: 8182
+  - name: bolt
+    port: 7687
+    targetPort: 7687

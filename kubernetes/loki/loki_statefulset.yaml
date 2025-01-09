@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki
+  namespace: name-twin
+spec:
+  serviceName: loki
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      securityContext:
+        fsGroup: 10001
+      initContainers:
+      - name: init-chown-data
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          mkdir -p /data/loki/boltdb-shipper-active
+          mkdir -p /data/loki/chunks
+          mkdir -p /data/loki/boltdb-shipper-compactor
+          mkdir -p /data/loki/boltdb-shipper-cache
+          chown -R 10001:10001 /data/loki
+        volumeMounts:
+        - name: loki-storage
+          mountPath: /data/loki
+      containers:
+      - name: loki
+        image: grafana/loki:2.8.2
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        args:
+        - "-config.file=/etc/loki/loki-config.yaml"
+        ports:
+        - name: http
+          containerPort: 3100
+        volumeMounts:
+        - name: loki-config
+          mountPath: /etc/loki
+        - name: loki-storage
+          mountPath: /data/loki
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+      volumes:
+      - name: loki-config
+        configMap:
+          name: loki-config
+      - name: loki-storage
+        persistentVolumeClaim:
+          claimName: loki-pvc

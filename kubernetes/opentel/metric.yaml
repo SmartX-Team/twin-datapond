@@ -1,0 +1,106 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: dt-otel-collector-metrics
+  namespace: opentelemetry-operator
+spec:
+  mode: daemonset
+  serviceAccount: otel-collector
+  env:
+    - name: K8S_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: HOST_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.hostIP      
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+          
+      kubeletstats:
+        collection_interval: 20s
+        auth_type: "serviceAccount"
+        endpoint: "https://${env:HOST_IP}:10250"
+        insecure_skip_verify: true
+        metric_groups:
+          - container
+          - pod
+          - node
+    
+    processors:
+      batch: {}
+
+      
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+    
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp, kubeletstats]
+          processors: [batch]
+          exporters: [prometheus]
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-collector
+  namespace: opentelemetry-operator
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-collector-metrics
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/stats", "nodes/metrics", "pods", "services"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-collector-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-collector-metrics
+subjects:
+- kind: ServiceAccount
+  name: otel-collector
+  namespace: opentelemetry-operator
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dt-otel-collector-metrics
+  namespace: opentelemetry-operator
+  labels:
+    ark.ulagbulag.io/test-ip-pool: "true"
+spec:
+  type: LoadBalancer
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      protocol: TCP
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      protocol: TCP
+      targetPort: 4318
+    - name: prometheus
+      port: 8889
+      protocol: TCP
+      targetPort: 8889
+  selector:
+    app.kubernetes.io/component: opentelemetry-collector
+    app.kubernetes.io/instance: opentelemetry-operator.dt-otel-collector-metrics

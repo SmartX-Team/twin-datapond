@@ -1,0 +1,42 @@
+# Camera Agent Visibility Server 를 위한 Web-UI Deployment, SVC
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-management-frontend
+  namespace: name-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-management-frontend
+  template:
+    metadata:
+      labels:
+        app: agent-management-frontend
+    spec:
+      containers:
+      - name: agent-management-frontend
+        image: ttyy441/agent_ui:0.1.0
+        env:
+        - name: API_BASE_URL
+          value: "http://10.80.0.13:5111"  # 나중에 실제 주소 맞춰서 동적으로 변경되도록 수정할 것
+        ports:
+        - containerPort: 8111
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-ui-service
+  namespace: name-twin
+  labels:
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"
+spec:
+  type: LoadBalancer
+  selector:
+    app: agent-management-frontend
+  ports:
+  - port: 3111
+    targetPort: 8111

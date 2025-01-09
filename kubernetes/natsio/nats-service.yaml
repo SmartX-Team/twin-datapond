@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-cluster-lb
+  namespace: nats-io
+  labels:
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"  
+spec:
+  type: LoadBalancer
+  ports:
+    - name: client
+      port: 4222
+      targetPort: 4222
+    - name: cluster
+      port: 6222
+      targetPort: 6222
+    - name: monitoring
+      port: 8222
+      targetPort: 8222
+  selector:
+    nats_cluster: nats-cluster
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-cluster
+  namespace: nats-io
+  labels:
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"  
+spec:
+  selector:
+    nats_cluster: nats-cluster
+  ports:
+    - name: client
+      port: 4222
+      targetPort: 4222
+      protocol: TCP
+    - name: cluster
+      port: 6222
+      targetPort: 6222
+      protocol: TCP

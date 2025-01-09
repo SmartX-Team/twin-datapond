@@ -1,0 +1,19 @@
+# svc for communicating with Prometheus 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: load-test-app
+  namespace: hpa-test
+  labels:
+    app: load-test-app    # ServiceMonitor의 selector와 일치
+    ark.ulagbulag.io/test-ip-pool: "true" 
+spec:
+  selector:
+    app: load-test-app
+  ports:
+    - name: http          # ServiceMonitor의 endpoint port 이름과 일치해야 함
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
+  type: LoadBalancer

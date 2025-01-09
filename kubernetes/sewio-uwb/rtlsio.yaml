@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"17"},"creationTimestamp":"2024-09-28T11:28:20Z","generation":27,"name":"rtlsio","namespace":"sewio-uwb","resourceVersion":"1179214035","uid":"1073acb0-f7a1-4748-907b-d2c0a3d005a3"},"spec":{"progressDeadlineSeconds":600,"replicas":0,"revisionHistoryLimit":10,"selector":{"matchLabels":{"name":"rtlsio"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"2024-10-23T10:53:05Z"},"creationTimestamp":null,"labels":{"name":"rtlsio"}},"spec":{"affinity":{"nodeAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"preference":{"matchExpressions":[{"key":"node-role.kubernetes.io/kiss-ephemeral-control-plane","operator":"DoesNotExist"}]},"weight":1}],"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"node-role.kubernetes.io/kiss","operator":"In","values":["ControlPlane"]},{"key":"node-role.kubernetes.io/sewio-uwb","operator":"Exists"}]}]}}},"containers":[{"env":[{"name":"JWT_SECRET_FILE","value":"/run/secrets/jwt_secret"},{"name":"INTERNAL_API_KEY_FILE","value":"/run/secrets/internal_api_key"},{"name":"WWW_HOST","value":"www"}],"image":"quay.io/netaiy/sewio-uwb-rtls-io:3.1.0","imagePullPolicy":"IfNotPresent","name":"rtlsio","ports":[{"containerPort":5959,"name":"http","protocol":"TCP"}],"resources":{},"securityContext":{"capabilities":{"add":["NET_ADMIN"]}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/home/rtlsio","name":"persistent-rtlsio"},{"mountPath":"/run/secrets/jwt_secret","name":"secret","subPath":"jwt_secret.txt"},{"mountPath":"/run/secrets/internal_api_key","name":"secret","subPath":"internal_api_key.txt"}]}],"dnsPolicy":"ClusterFirst","imagePullSecrets":[{"name":"ark-registry"}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"name":"persistent-rtlsio","persistentVolumeClaim":{"claimName":"rtlsio"}},{"name":"secret","secret":{"defaultMode":420,"secretName":"uwb"}}]}}},"status":{"conditions":[{"lastTransitionTime":"2024-10-09T17:52:29Z","lastUpdateTime":"2024-10-23T10:53:09Z","message":"ReplicaSet \"rtlsio-88765d69f\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"},{"lastTransitionTime":"2024-11-04T13:57:18Z","lastUpdateTime":"2024-11-04T13:57:18Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"}],"observedGeneration":27}}
+  creationTimestamp: "2024-11-04T14:12:29Z"
+  generation: 2
+  name: rtlsio
+  namespace: sewio-uwb
+  resourceVersion: "1179220012"
+  uid: 932dbecf-d7cb-4aca-8b2a-8ca79e44b852
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: rtlsio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2024-10-23T10:53:05Z"
+      creationTimestamp: null
+      labels:
+        name: rtlsio
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                operator: DoesNotExist
+            weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                - ControlPlane
+              - key: node-role.kubernetes.io/sewio-uwb
+                operator: Exists
+      containers:
+      - env:
+        - name: JWT_SECRET_FILE
+          value: /run/secrets/jwt_secret
+        - name: INTERNAL_API_KEY_FILE
+          value: /run/secrets/internal_api_key
+        - name: WWW_HOST
+          value: www
+        image: quay.io/netaiy/sewio-uwb-rtls-io:3.1.0
+        imagePullPolicy: IfNotPresent
+        name: rtlsio
+        ports:
+        - containerPort: 5959
+          name: http
+          protocol: TCP
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /home/rtlsio
+          name: persistent-rtlsio
+        - mountPath: /run/secrets/jwt_secret
+          name: secret
+          subPath: jwt_secret.txt
+        - mountPath: /run/secrets/internal_api_key
+          name: secret
+          subPath: internal_api_key.txt
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: ark-registry
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: persistent-rtlsio
+        persistentVolumeClaim:
+          claimName: rtlsio
+      - name: secret
+        secret:
+          defaultMode: 420
+          secretName: uwb
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2024-11-04T14:12:29Z"
+    lastUpdateTime: "2024-11-04T14:12:29Z"
+    message: ReplicaSet "rtlsio-dcc9d444b" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2024-11-04T14:12:47Z"
+    lastUpdateTime: "2024-11-04T14:12:47Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 2
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

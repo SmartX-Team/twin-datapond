@@ -1,0 +1,101 @@
+#Camera Agent Kafka communication version Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-deployment
+  namespace: vine-session-name-wow20
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent
+  template:
+    metadata:
+      labels:
+        app: agent
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: ark.ulagbulag.io/bind
+                operator: In
+                values:
+                - "true"
+              - key: ark.ulagbulag.io/bind.namespace
+                operator: In
+                values:
+                - vine-session-name-wow20
+              - key: ark.ulagbulag.io/bind.user
+                operator: In
+                values:
+                - name-wow20
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - c2136df7-8483-22eb-3210-1c697ad99e00
+      containers:
+      - name: agent
+        image: ttyy441/agent:0.5.3
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+        env:
+        - name: STREAMING_METHOD
+          value: "KAFKA"
+        - name: KAFKA_TOPIC
+          value: "wow20-camera"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "210.125.85.62:9094"
+        - name: FRAME_RATE
+          value: "5"
+        - name: IMAGE_WIDTH
+          value: "640"
+        - name: IMAGE_HEIGHT
+          value: "360"
+        - name: SERVER_IP
+          value: "10.80.0.3"
+        - name: SERVER_PORT
+          value: "5111"
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+          runAsUser: 0
+          runAsGroup: 0
+        volumeMounts:
+        - name: video-device
+          mountPath: /dev/video0
+      volumes:
+      - name: video-device
+        hostPath:
+          path: /dev/video0
+
+---
+# TCP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-service
+  namespace: vine-session-name-wow20
+  labels:
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"  
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local # 외부에서 들어온 요청을 로컬 노드에만 전달하도록 하는 설정
+  selector:
+    app: agent
+  ports:
+    - name: http
+      port: 8000        
+      targetPort: 8000  
+    - name: rtsp
+      port: 8554        
+      targetPort: 8554  
+      protocol: TCP

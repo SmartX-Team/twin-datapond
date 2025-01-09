@@ -1,0 +1,34 @@
+# Camera Agent Visibility Server 에 HPA 적용하는 YAML
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent-deployment-hpa
+  namespace: name-twin
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-deployment
+  minReplicas: 1
+  maxReplicas: 10  
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:  # 스케일링 동작 조정
+    scaleUp:
+      stabilizationWindowSeconds: 60  # 스케일 업 전 대기 시간
+      policies:
+      - type: Percent
+        value: 100  # 한 번에 최대 100% 증가
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 스케일 다운 전 대기 시간
+      policies:
+      - type: Percent
+        value: 50   # 한 번에 최대 50% 감소
+        periodSeconds: 15

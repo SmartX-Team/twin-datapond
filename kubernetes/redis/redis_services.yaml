@@ -1,0 +1,23 @@
+ # Redis 배포를 위한 svc
+ # Example: kubectl get svc -n name-twin
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-external-service
+  namespace: name-twin
+  labels:
+    ark.ulagbulag.io/test-ip-pool: "true"
+spec:
+  type: LoadBalancer
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+    - name: sentinel
+      port: 26379
+      targetPort: 26379
+      protocol: TCP
+  selector:
+    app: redis

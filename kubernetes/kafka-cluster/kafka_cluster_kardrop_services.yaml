@@ -4,7 +4,7 @@ metadata:
   name: kafdrop
   namespace: strimzi-kafka-operator
   labels:
-    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/test-ip-pool: "true" 
 spec:
   type: LoadBalancer
   ports:

@@ -1,25 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres
+  name: dt-postgres
   namespace: name-twin
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
-  template:
-    spec:
-      nodeSelector: {}
+      app: dt-postgres
   template:
     metadata:
       labels:
-        app: postgres
+        app: dt-postgres
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - d0663000-9770-11e9-8000-3cecef55ef5c
+                      - d15f2200-936a-11e9-8000-3cecef55f0e8
       containers:
         - name: postgres
           image: 'postgres:14'
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
           ports:
             - containerPort: 5432
           env:
@@ -39,9 +53,9 @@ spec:
                   name: postgres-secret
                   key: POSTGRES_PASSWORD
             - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata  # 하위 디렉토리 지정
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
-            - mountPath: /var/lib/postgresql/data  # 상위 디렉토리 마운트
+            - mountPath: /var/lib/postgresql/data
               name: postgresdata
       volumes:
         - name: postgresdata

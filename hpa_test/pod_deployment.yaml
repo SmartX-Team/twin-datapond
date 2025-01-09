@@ -1,0 +1,36 @@
+#YAML based on test pod to verify if HPA (Horizontal Pod Autoscaler) is working properly
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-test-app
+  namespace: hpa-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: load-test-app
+  template:
+    metadata:
+      labels:
+        app: load-test-app
+    spec:
+      containers:
+      - name: load-test-app
+        image: ttyy441/scale-test:0.1
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        ports:
+        - containerPort: 5000
+        env:
+        - name: LOAD_DURATION_SECONDS
+          value: "300"
+        - name: MAX_WORKER_PROCESSES
+          value: "4"
+        - name: MATRIX_SIZE
+          value: "100"

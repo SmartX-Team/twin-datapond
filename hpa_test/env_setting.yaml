@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hpa-test
+  labels:
+    monitoring: enabled
+
+---
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hpa-load-test-monitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: load-test-app
+  namespaceSelector:
+    matchNames:
+      - hpa-test
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

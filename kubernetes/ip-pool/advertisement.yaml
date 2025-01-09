@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumBGPAdvertisement
+metadata:
+  name: test-pool-advertisement
+  labels:
+    advertise: local
+spec:
+  advertisements:
+  - advertisementType: Service
+    selector:
+      matchExpressions:
+      - key: ark.ulagbulag.io/test-ip-pool
+        operator: In
+        values:
+        - "true"
+    service:
+      addresses:
+      - ClusterIP
+      - ExternalIP
+      - LoadBalancerIP

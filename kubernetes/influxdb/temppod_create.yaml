@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: temp-pod
+  namespace: name-twin
+spec:
+  containers:
+  - name: temp-container
+    image: ubuntu:20.04
+    command: ["/bin/sleep", "3600"]
+    volumeMounts:
+    - name: collector-storage
+      mountPath: /data
+  volumes:
+  - name: collector-storage
+    persistentVolumeClaim:
+      claimName: kafka-metrics-collector-pvc

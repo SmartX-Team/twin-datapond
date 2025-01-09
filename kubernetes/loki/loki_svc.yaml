@@ -1,14 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres
+  name: loki
   namespace: name-twin
   labels:
     ark.ulagbulag.io/test-ip-pool: "true"
 spec:
   ports:
-  - port: 5432
-    name: postgres
+  - port: 3100
+    name: http
+  - port: 9095
+    name: grpc
   selector:
-    app: dt-postgres
+    app: loki
   type: LoadBalancer
