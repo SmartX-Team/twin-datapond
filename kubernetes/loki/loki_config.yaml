@@ -5,27 +5,38 @@ metadata:
   namespace: name-twin
 data:
   loki-config.yaml: |
+    auth_enabled: false 
     server:
       http_listen_port: 3100
+      grpc_listen_port: 9095
 
-    distributor:
-      ring:
-        kvstore:
-          store: inmemory
+    common:
+      path_prefix: /data/loki
+      storage:
+        filesystem:
+          chunks_directory: /data/loki/chunks
+          rules_directory: /data/loki/rules
 
     ingester:
       lifecycler:
-        address: $(POD_IP)
         ring:
           kvstore:
             store: inmemory
-        final_sleep: 0s
+          replication_factor: 1
       chunk_idle_period: 30m
       chunk_retain_period: 30s
-      max_transfer_retries: 0
+      wal:
+        enabled: true
+        dir: /data/loki/wal
 
-    limits_config:
-      retention_period: 168h   
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /data/loki/boltdb-shipper-active
+        cache_location: /data/loki/boltdb-shipper-cache
+        cache_ttl: 24h
+        shared_store: filesystem
+      filesystem:
+        directory: /data/loki/chunks
 
     schema_config:
       configs:
@@ -37,19 +48,5 @@ data:
             prefix: index_
             period: 24h
 
-    compactor:
-      shared_store: filesystem
-      working_directory: /data/loki/boltdb-shipper-compactor
-
-    storage_config:
-      boltdb_shipper:
-        active_index_directory: /data/loki/boltdb-shipper-active
-        cache_location: /data/loki/boltdb-shipper-cache
-        cache_ttl: 24h
-        shared_store: filesystem
-      filesystem:
-        directory: /data/loki/chunks
-
-    table_manager:
-      retention_deletes_enabled: true
+    limits_config:
       retention_period: 168h

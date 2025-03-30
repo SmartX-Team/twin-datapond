@@ -1,0 +1,217 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: strimzi-entity-operator-role
+  namespace: name-twin
+  labels:
+    app: strimzi
+rules:
+  # Rules needed for managing Kafka Topics, Users, potentially ConfigMaps, Secrets etc.
+  # This is a minimal example; refer to Strimzi docs for comprehensive roles.
+  - apiGroups: ["kafka.strimzi.io"]
+    resources: ["kafkatopics", "kafkausers", "kafkaconnectors", "kafkamirrormakers", "kafkamirrormaker2s", "kafkabridges", "kafkarebalances"] # Add/remove based on features used
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods"] # Needed for some operations like rebalances
+    verbs: ["list", "get"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"] # Needed if managing KafkaConnect builds, etc.
+    verbs: ["list", "get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: strimzi-entity-operator-binding
+  namespace: name-twin
+  labels:
+    app: strimzi
+subjects:
+  # The Service Account used by the Entity Operator pods (Topic Operator, User Operator)
+  # Strimzi typically creates a SA named like '<cluster-name>-entity-operator'
+  # Adjust if you use a different Service Account name.
+- kind: ServiceAccount
+  name: kafka-cluster-entity-operator # Adjust this based on the actual SA name Strimzi creates/uses
+  namespace: name-twin
+roleRef:
+  kind: Role
+  name: strimzi-entity-operator-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# 2. ConfigMap for Kafka Metrics (ensure it exists in the 'name-twin' namespace)
+#    Assuming the content is correct as referenced in the Kafka spec.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-metrics # Must match the name in Kafka spec's configMapKeyRef
+  namespace: name-twin # Deploy in the target namespace
+data:
+  kafka-metrics-config.yml: |
+    lowercaseOutputName: true
+    rules:
+      - pattern: "org.apache.zookeeper<name=(.+)><>Value"
+        name: zookeeper_$1
+        type: GAUGE
+        help: "Zookeeper metric $1"
+
+---
+# 3. Kafka Cluster Definition
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: kafka-cluster
+  namespace: name-twin # *** CHANGED NAMESPACE ***
+spec:
+  kafka:
+    version: 3.8.0
+    replicas: 3
+    listeners:
+      # Internal listener (remains the same)
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      # External listener using LoadBalancer
+      # Strimzi Operator will create the necessary LoadBalancer services automatically
+      - name: external
+        port: 9094 # Port for the bootstrap service and internal broker port
+        type: loadbalancer
+        tls: false
+        configuration:
+          # This bootstrap config applies to the main LoadBalancer Service (e.g., kafka-cluster-kafka-external-bootstrap)
+          bootstrap:
+            labels:
+              ark.ulagbulag.io/is-dt-external: "true"
+              ark.ulagbulag.io/test-ip-pool: "true"
+            # annotations: {} # Add annotations if needed for cloud provider LB config
+          # This brokers config applies to the per-broker LoadBalancer Services (e.g., kafka-cluster-kafka-0, ...)
+          brokers:
+            - broker: 0
+              advertisedHost: 10.79.1.3
+              advertisedPort: 9094             
+              labels:
+                ark.ulagbulag.io/is-dt-external: "true"
+                ark.ulagbulag.io/test-ip-pool: "true"
+              # advertisedHost: <can be set if needed>
+              # advertisedPort: <can be set if needed>
+              # loadBalancerSourceRanges: [] # Restrict IPs that can access broker 0 LB
+              # nodePort: 32000 # Request specific NodePort if using NodePort access within LB Service
+              # annotations: {} # Add annotations if needed for cloud provider LB config
+            - broker: 1
+              advertisedHost: 10.79.1.4
+              advertisedPort: 9094             
+              labels:
+                ark.ulagbulag.io/is-dt-external: "true"
+                ark.ulagbulag.io/test-ip-pool: "true"
+            - broker: 2
+              advertisedHost: 10.79.1.5
+              advertisedPort: 9094             
+              labels:
+                ark.ulagbulag.io/is-dt-external: "true"
+                ark.ulagbulag.io/test-ip-pool: "true"
+          # finalizers: # Optional: add service finalizers if needed, e.g., service.beta.kubernetes.io/azure-load-balancer-internal
+          #   - service.kubernetes.io/load-balancer-cleanup
+
+    config:
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      log.message.format.version: "3.5"
+      # Recommended: Configure advertised.listeners matching the external listener
+      # Strimzi often handles this automatically based on the LoadBalancer status, but explicit config can be clearer
+      # advertised.listeners: PLAIN://:9092,EXTERNAL://<will-be-filled-by-strimzi-or-set-manually-if-needed>
+    storage:
+      type: persistent-claim
+      size: 10Gi
+      deleteClaim: false
+      class: ceph-block
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 1000m
+      limits:
+        memory: 4Gi
+        cpu: 2000m
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics # Ensure this matches the ConfigMap name above
+          key: kafka-metrics-config.yml
+          # namespace: name-twin # Explicitly defining namespace is good practice, though it defaults to the Kafka resource's namespace
+    template:
+      # Add Prometheus annotations to Kafka pods for scraping
+      pod:
+        metadata:
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9404" # Default JMX exporter port used by Strimzi
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                        - d0663000-9770-11e9-8000-3cecef55ef5c
+                        - d15f2200-936a-11e9-8000-3cecef55f0e8
+  zookeeper:
+    replicas: 3
+    storage:
+      type: persistent-claim
+      size: 10Gi
+      deleteClaim: false
+      class: ceph-block
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 1000m
+      limits:
+        memory: 4Gi
+        cpu: 2000m
+    # Add Prometheus annotations to Zookeeper pods if you scrape them too
+    template:
+      pod:
+        # metadata:
+        #   annotations:
+        #     prometheus.io/scrape: "true"
+        #     prometheus.io/port: "..." # Zookeeper JMX port if configured
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                        - d0663000-9770-11e9-8000-3cecef55ef5c
+                        - d15f2200-936a-11e9-8000-3cecef55f0e8
+    # metricsConfig: # Add Zookeeper metrics config if needed
+    #   type: jmxPrometheusExporter
+    #   valueFrom:
+    #     configMapKeyRef:
+    #       name: zookeeper-metrics
+    #       key: zookeeper-metrics-config.yml
+  entityOperator:
+    # Entity Operator runs in the same namespace as the Kafka cluster ('name-twin')
+    topicOperator:
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 1000m
+        limits:
+          memory: 2Gi
+          cpu: 2000m
+    userOperator:
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 1000m
+        limits:
+          memory: 2Gi
+          cpu: 2000m

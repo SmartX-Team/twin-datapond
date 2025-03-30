@@ -1,0 +1,58 @@
+########################################
+# 1. 네임스페이스 생성
+########################################
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: name-twin
+---
+########################################
+# 2. ServiceAccount 생성
+########################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark-operator-sa
+  namespace: name-twin
+---
+########################################
+# 3. Role 생성 (리소스와 verbs 정의)
+########################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: spark-operator-role
+  namespace: name-twin
+rules:
+  # Core API Group
+- apiGroups: [""]
+  resources:
+    - pods
+    - services
+    - configmaps
+    - secrets
+    - events
+    - persistentvolumeclaims
+  verbs: ["*"]  # 모든 동작 허용 (create, get, list, watch, update, patch, delete, deletecollection 등)
+  # Spark Operator CRD
+- apiGroups: ["sparkoperator.k8s.io"]
+  resources:
+    - sparkapplications
+  verbs: ["*"]
+---
+########################################
+# 4. RoleBinding 생성 (위 Role + SA 연결)
+########################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-operator-rolebinding
+  namespace: name-twin
+subjects:
+- kind: ServiceAccount
+  name: spark-operator-sa
+  namespace: name-twin
+roleRef:
+  kind: Role
+  name: spark-operator-role
+  apiGroup: rbac.authorization.k8s.io

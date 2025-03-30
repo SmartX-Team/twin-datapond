@@ -7,7 +7,8 @@ metadata:
   name: kafka-external-service
   namespace: strimzi-kafka-operator
   labels:
-    ark.ulagbulag.io/is-external: "true"  
+    ark.ulagbulag.io/is-dt-external: "true"
+    ark.ulagbulag.io/test-ip-pool: "true"
     strimzi.io/kind: Kafka  # ServiceMonitor 선택을 위한 라벨 추가
   annotations:
     prometheus.io/scrape: "true"  # Prometheus 스크래핑 활성화

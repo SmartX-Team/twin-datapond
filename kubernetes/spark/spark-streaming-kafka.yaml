@@ -5,7 +5,7 @@ apiVersion: "sparkoperator.k8s.io/v1beta2"
 kind: SparkApplication
 metadata:
   name: kafka-streaming
-  namespace: spark-operator
+  namespace: name-twin
 spec:
   type: Python
   pythonVersion: "3"
@@ -13,7 +13,7 @@ spec:
   image: "docker.io/ttyy441/my-spark:3.5.1"
   imagePullPolicy: Always
   #mainApplicationFile: local:///mnt/ceph-pvc/kafka-streaming.py  # 마운드한 PVC 경로에 CP 한 파일
-  mainApplicationFile: local:///mnt/ceph-pvc/srv/test/kafka-streaming.py  # 마운드한 PVC 경로에 CP 한 파일
+  mainApplicationFile: local:///mnt/ceph-pvc/Spark_application/kafka-streaming.py  # 마운드한 PVC 경로에 CP 한 파일
   sparkVersion: "3.5.0"
   restartPolicy:
     type: OnFailure
@@ -27,7 +27,7 @@ spec:
     memory: "1G"
     labels:
       version: 3.5.0
-    serviceAccount: spark-operator-spark
+    serviceAccount: spark-operator-sa # name-twin 에서 Spark-operator가 Pod 생성하도록 만든 계정
     volumeMounts:
       - name: ceph-pvc
         mountPath: /mnt/ceph-pvc  # PVC 마운트 경로
@@ -46,4 +46,4 @@ spec:
   volumes:
     - name: ceph-pvc
       persistentVolumeClaim:
-        claimName: file-pvc  # 생성한 PVC 이름
+        claimName: file-browser-pvc # 생성한 PVC 이름

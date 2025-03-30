@@ -1,0 +1,57 @@
+# pvc 로 파일 복사하고 spark-operator 로 경로 인식해서 Spark 실행할 수 있나 테스트
+# 델타 레이크로 MinIO 기반 S3 스토리지까지 적재되는지 테스트용
+
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: kafka-fms
+  namespace: name-twin
+spec:
+  type: Python
+  pythonVersion: "3"
+  mode: cluster
+  image: "docker.io/ttyy441/my-spark:3.6.1" # OTF포함 및 필요 라이브러리들 함께 Dockerfile로 빌드하고 푸시한 이미지 사용
+  imagePullPolicy: Always
+  mainApplicationFile: local:///mnt/ceph-pvc/Spark_application/fms-temphum-storage.py  # 마운드한 PVC 경로의 Python 스크립트
+  sparkVersion: "3.5.0" # Dockerfile의 Base 이미지 버전과 일치
+  restartPolicy:
+    type: OnFailure
+    onFailureRetries: 1
+    onFailureRetryInterval: 10
+    onSubmissionFailureRetries: 2
+    onSubmissionFailureRetryInterval: 10
+  driver:
+    cores: 1
+    coreLimit: "1200m"
+    memory: "1G"
+    labels:
+      version: 3.5.0 # 이 레이블은 참고용이며, 실제 Spark 버전에 영향 없음
+    serviceAccount: spark-operator-sa
+    volumeMounts:
+      - name: ceph-pvc
+        mountPath: /mnt/ceph-pvc  # PVC 마운트 경로
+  executor:
+    cores: 1
+    instances: 1
+    memory: "2G"
+    labels:
+      version: 3.5.0 # 이 레이블은 참고용이며, 실제 Spark 버전에 영향 없음
+    volumeMounts:
+      - name: ceph-pvc
+        mountPath: /mnt/ceph-pvc  # PVC 마운트 경로 (마운트 경로가 다르개 했다면 mainApplicationFile 경로도 수정한대로 맞추삼)
+  deps:
+    jars:
+      # Kafka 관련 JAR (Dockerfile에 포함된 버전/이름과 동일하게 맞추삼)
+      - local:///opt/spark/jars/delta-core_2.12-2.4.0.jar
+      - local:///opt/spark/jars/delta-storage-3.3.0.jar
+      - local:///opt/spark/jars/delta-spark_2.12-3.3.0.jar 
+      - local:///opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.3.jar
+      - local:///opt/spark/jars/kafka-clients-3.5.2.jar
+      - local:///opt/spark/jars/commons-pool2-2.11.1.jar
+      - local:///opt/spark/jars/spark-token-provider-kafka-0-10_2.12-3.5.3.jar
+      - local:///opt/spark/jars/hadoop-aws-3.3.4.jar
+      - local:///opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
+  volumes:
+    - name: ceph-pvc
+      persistentVolumeClaim:
+        claimName: file-browser-pvc  # PVC 변경했다면 여기서 수정

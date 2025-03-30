@@ -67,6 +67,7 @@ metadata:
   name: influxdb
   namespace: name-twin
   labels:
+    ark.ulagbulag.io/is-dt-external: "true"
     ark.ulagbulag.io/test-ip-pool: "true"
 spec:
   type: LoadBalancer

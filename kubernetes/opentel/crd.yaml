@@ -5,22 +5,31 @@ metadata:
   namespace: opentelemetry-operator
 spec:
   mode: deployment
-  # collector configuration (OpenTelemetry Collector config YAML)
   config: |
     receivers:
       otlp:
         protocols:
           grpc:
           http:
+      filelog:
+        include: [ /var/log/pods/*/*/*.log ]
+        start_at: beginning
+        operators:
+          - type: regex_parser
+            regex: '^(?P<time>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{9}Z) (?P<stream>\S+) (?P<tag>\S+) (?P<message>.*)$'
 
     exporters:
       otlp:
         endpoint: dt-jaeger-collector.jaeger-system.svc.ops.openark:14250
         tls:
           insecure: true
+      loki:
+        endpoint: "http://loki.name-twin.svc:3100/loki/api/v1/push"
 
     processors:
-      batch: {}
+      batch:
+        timeout: 1s
+        send_batch_size: 1024
 
     service:
       pipelines:
@@ -28,3 +37,7 @@ spec:
           receivers: [otlp]
           processors: [batch]
           exporters: [otlp]
+        logs:
+          receivers: [filelog]
+          processors: [batch]
+          exporters: [loki]

@@ -31,7 +31,14 @@ spec:
           - container
           - pod
           - node
-    
+          
+      filelog:
+        include: [ /var/log/pods/*/*/*.log ]
+        start_at: beginning
+        operators:
+          - type: regex_parser
+            regex: '^(?P<time>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{9}Z) (?P<stream>\S+) (?P<tag>\S+) (?P<message>.*)$'
+
     processors:
       batch: {}
 

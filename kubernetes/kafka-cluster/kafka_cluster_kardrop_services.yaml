@@ -1,14 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafdrop
+  namespace: name-twin 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafdrop
+  template:
+    metadata:
+      labels:
+        app: kafdrop
+    spec:
+      affinity: 
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - d0663000-9770-11e9-8000-3cecef55ef5c
+                      - d15f2200-936a-11e9-8000-3cecef55f0e8
+      containers:
+        - name: kafdrop
+          image: obsidiandynamics/kafdrop:latest 
+          ports:
+            - containerPort: 9000
+          env:
+            - name: KAFKA_BROKER_CONNECT
+              # name-twin 네임스페이스 내의 Kafka 클러스터 내부 부트스트랩 서비스 주소
+              value: "kafka-cluster-kafka-bootstrap:9092"
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "3Gi"
+              cpu: "2"
+
+--- # Deployment와 Service 구분
+
 apiVersion: v1
 kind: Service
 metadata:
   name: kafdrop
-  namespace: strimzi-kafka-operator
+  namespace: name-twin 
   labels:
-    ark.ulagbulag.io/test-ip-pool: "true" 
+    ark.ulagbulag.io/is-dt-external: "true"
+    ark.ulagbulag.io/test-ip-pool: "true"
 spec:
-  type: LoadBalancer
+  type: LoadBalancer # 외부 접근을 위해 LoadBalancer 타입 유지
   ports:
-    - port: 9000
-      targetPort: 9000
+    - port: 9000       # 서비스가 노출할 포트
+      targetPort: 9000 # Kafdrop 컨테이너가 사용하는 포트
   selector:
-    app: kafdrop
+    app: kafdrop # 위 Deployment의 Pod 레이블과 일치해야 함

@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: minio-allow-all
+  namespace: name-twin
+spec:
+  podSelector:
+    matchLabels:
+      app: twin-pond
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - {}  # Allow all incoming traffic
+  egress:
+  - {}  # Allow all outgoing traffic

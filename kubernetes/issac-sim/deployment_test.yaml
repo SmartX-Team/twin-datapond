@@ -1,0 +1,22 @@
+# 파일 이름 예: nvidia-smi-test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nvidia-smi-test
+  namespace: default
+spec:
+  # 특정 노드로 스케줄링하려면 nodeName 지정
+  nodeName: 1c24f4fb-b346-4d7e-a68e-a8a159c0536a
+
+  # 노드에 taint가 있을 수 있으니, 무조건 스케줄링되도록 toleration 추가
+  tolerations:
+    - operator: "Exists"
+
+  containers:
+    - name: nvidia-smi
+      image: "nvidia/cuda:12.2.0-devel-ubuntu22.04"
+      command: ["/bin/bash", "-c", "sleep infinity"]
+      resources:
+        limits:
+          # 3개의 GPU를 요청
+          nvidia.com/gpu: "3"
