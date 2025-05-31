@@ -3,40 +3,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent-management-frontend
+  name: camera-agent-visiblity-frontend
   namespace: name-twin
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: agent-management-frontend
+      app: camera-agent-visiblity-frontend
   template:
     metadata:
       labels:
-        app: agent-management-frontend
+        app: camera-agent-visiblity-frontend
     spec:
       containers:
-      - name: agent-management-frontend
-        image: ttyy441/agent_ui:0.1.0
+      - name: camera-agent-visiblity-frontend
+        image: ttyy441/camera-agent-ui:0.2
         env:
         - name: API_BASE_URL
-          value: "http://10.80.0.13:5111"  # 나중에 실제 주소 맞춰서 동적으로 변경되도록 수정할 것
+          value: "http://10.79.1.7:5111"  # agent-service svc 주소임 
         ports:
-        - containerPort: 8111
+        - containerPort: 8112
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent-ui-service
+  name: camera-agent-ui-service
   namespace: name-twin
   labels:
-    ark.ulagbulag.io/is-external: "true"
-    ark.ulagbulag.io/is-private: "true"
+    ark.ulagbulag.io/is-dt-external: "true"
+    ark.ulagbulag.io/test-ip-pool: "true"
 spec:
   type: LoadBalancer
   selector:
-    app: agent-management-frontend
+    app: camera-agent-visiblity-frontend
   ports:
   - port: 3111
-    targetPort: 8111
+    targetPort: 8112

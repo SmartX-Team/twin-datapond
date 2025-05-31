@@ -1,0 +1,91 @@
+# ai-service-visibility-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service-visibility
+  namespace: name-twin    
+  labels:
+    app: ai-service-visibility
+spec:
+  replicas: 1 # 필요에 따라 복제본 수를 조정하세요.
+  selector:
+    matchLabels:
+      app: ai-service-visibility
+  template:
+    metadata:
+      labels:
+        app: ai-service-visibility
+    spec:
+      containers:
+      - name: ai-service-visibility-container
+        image: ttyy441/ai-service-visibility:0.2.0
+        ports:
+        - containerPort: 5005 # AI_CONFIG_SERVICE_PORT와 동일해야 합니다.
+        env:
+        # Docker run 명령어에서 제공된 환경 변수들
+        - name: POSTGRES_HOST
+          value: "10.79.1.13"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: "myuser"
+        - name: POSTGRES_PASSWORD
+          value: "netAi007!" # 실제 운영 환경에서는 Secret 사용을 권장합니다.
+        - name: POSTGRES_DB
+          value: "uwb"
+        - name: UWB_TABLE_NAME
+          value: "uwb_raw"
+        - name: REDIS_HOST
+          value: "10.79.1.14"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB_SERVICE_CONFIG # config.py의 REDIS_DB_SERVICE_CONFIG 와 매칭
+          value: "0"
+        # REDIS_PASSWORD는 docker run 명령어에 없었지만, config.py에 있으므로 필요시 추가
+        # - name: REDIS_PASSWORD
+        #   value: "your-redis-password" # 실제 비밀번호로 변경 (필요한 경우)
+        - name: VISIBILITY_SERVER_URL
+          value: "http://10.79.1.7:5111"
+        - name: AI_CONFIG_SERVICE_PORT # Flask 앱이 사용하는 포트
+          value: "5005"
+        - name: LOG_LEVEL
+          value: "INFO"
+        # config.py에 정의된 추가 환경 변수 (기본값 사용 또는 여기서 오버라이드)
+        - name: REDIS_SERVICE_CONFIG_KEY_PREFIX
+          value: "service_configs" # config.py의 기본값과 동일하게 설정
+        - name: CLEANUP_INTERVAL_MINUTES
+          value: "60" # config.py의 기본값과 동일하게 설정 (운영에 맞게 조정)
+        # livenessProbe 및 readinessProbe는 서비스 안정성을 위해 추가하는 것이 좋습니다.
+        # 예시 (실제 애플리케이션의 헬스 체크 엔드포인트로 수정 필요):
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health # 예시 경로, 실제 헬스 체크 엔드포인트로 변경
+        #     port: 5005
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 10
+        # readinessProbe:
+        #   httpGet:
+        #     path: /ready # 예시 경로, 실제 준비 상태 확인 엔드포인트로 변경
+        #     port: 5005
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 5
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service-visibility-svc
+  namespace: name-twin
+  labels:
+    app: ai-service-visibility
+    ark.ulagbulag.io/is-dt-external: "true"
+    ark.ulagbulag.io/test-ip-pool: "true"
+spec:
+  type: LoadBalancer
+  selector:
+    app: ai-service-visibility
+  ports:
+  - protocol: TCP
+    port: 5005       # 서비스가 클러스터 내에서 노출될 포트
+    targetPort: 5005 # 컨테이너가 리스닝하는 포트 (AI_CONFIG_SERVICE_PORT와 동일)

@@ -7,6 +7,7 @@ metadata:
   name: redis-external-service
   namespace: name-twin
   labels:
+    ark.ulagbulag.io/is-dt-external: "true"
     ark.ulagbulag.io/test-ip-pool: "true"
 spec:
   type: LoadBalancer

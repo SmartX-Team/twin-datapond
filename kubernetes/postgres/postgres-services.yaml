@@ -4,6 +4,7 @@ metadata:
   name: postgres
   namespace: name-twin
   labels:
+    ark.ulagbulag.io/is-dt-external: "true"
     ark.ulagbulag.io/test-ip-pool: "true"
 spec:
   ports:

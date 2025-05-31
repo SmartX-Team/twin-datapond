@@ -5,21 +5,23 @@ import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 import json
 
-# MinIO Tenant 정보
-endpoint_url = ''
-access_key = ''
-secret_key = ''
+# MinIO Tenant Info
+endpoint_url = 'http://10.79.1.0:9000'
+access_key = 'YYFfYYBbYyGREfMIU2oI'
+secret_key = '0ddqNkGrdKI46x5MYq5gEPYqfFgqsycAQiOBHH73'
 
-# config.json 파일에서 나머지 설정 읽기
+# Read the remaining settings from the config.json file
 config_path = '/home/netai/twin-datapond/config.json'
 
+"""
 with open(config_path, 'r') as config_file:
     config = json.load(config_file)
     endpoint_url = config['minio']['endpoint_url']
     access_key = config['minio']['access_key']
     secret_key = config['minio']['secret_key']
+"""
 
-# MinIO 클라이언트 생성
+# Create to MinIO Client Session
 s3_client = boto3.client(
     's3',
     endpoint_url=endpoint_url,
@@ -29,7 +31,7 @@ s3_client = boto3.client(
     verify=False
 )
 
-# 버킷 생성 함수
+# Create the bucket
 def create_bucket(bucket_name):
     try:
         s3_client.create_bucket(Bucket=bucket_name)
@@ -97,12 +99,12 @@ def list_objects(bucket_name):
 # 예제 사용법
 
 # 1. 버킷 생성
-#create_bucket('mybucket')
+create_bucket('mybucket')
 
 # 2. 파일 업로드
-#upload_file('myfile.txt', 'mybucket', 'myfile.txt')
+upload_file('myfile.txt', 'mybucket', 'myfile.txt')
 
 # 3. 파일 다운로드
-#download_file('mybucket', 'myfile.txt', 'myfile_downloaded.txt')
+download_file('mybucket', 'myfile.txt', 'myfile_downloaded.txt')
 
-list_objects('mybucket')
+list_objects('twin-bucket')

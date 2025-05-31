@@ -4,21 +4,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent-deployment
+  name: camera-agent-visibility
   namespace: name-twin
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vision-agent-visibility
+      app: camera-agent-visibility
   template:
     metadata:
       labels:
-        app: vision-agent-visibility
+        app: camera-agent-visibility
     spec:
       containers:
       - name: agent
-        image: ttyy441/agent_visibility:0.3.1
+        image: ttyy441/camera-agent-visibility:0.4.4
         ports:
         - containerPort: 5111
         resources:
@@ -47,13 +47,13 @@ metadata:
   name: agent-service
   namespace: name-twin
   labels:
-    app: vision-agent-visibility
-    ark.ulagbulag.io/is-external: "true"
-    ark.ulagbulag.io/is-private: "true"
+    app: camera-agent-visibility
+    ark.ulagbulag.io/is-dt-external: "true"
+    ark.ulagbulag.io/test-ip-pool: "true"
 spec:
   type: LoadBalancer
   selector:
-    app: vision-agent-visibility
+    app: camera-agent-visibility
   ports:
     - name: http
       port: 5111
@@ -70,7 +70,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: vision-agent-visibility
+      app: camera-agent-visibility
   namespaceSelector:
     matchNames:
       - name-twin

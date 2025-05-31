@@ -1,0 +1,201 @@
+version: "3.3"
+
+services:
+  # 예시: DB 컨테이너
+  sewiodb:
+    image: "quay.io/netaiy/sewio-uwb-sewiodb:3.1.0"
+    container_name: "sewio-uwb-sewiodb"
+    restart: always
+    environment:
+      MYSQL_USER: "laravel_user"
+      MYSQL_PASSWORD_FILE: "/run/secrets/db_password"
+      MYSQL_ROOT_USERNAME: "sewiortls"
+      MYSQL_ROOT_PASSWORD_FILE: "/run/secrets/db_root_password"
+      INTERNAL_API_KEY_FILE: "/run/secrets/internal_api_key"
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - type: bind
+        source: ./db-dump
+        target: /docker-entrypoint-initdb.d
+      - type: bind
+        source: ./db-dump-migrate
+        target: /docker-entrypoint-initdb.d/migrate/src
+      - type: bind
+        source: ./secrets/db_password.txt
+        target: /run/secrets/db_password
+      - type: bind
+        source: ./secrets/db_root_password.txt
+        target: /run/secrets/db_root_password
+      - type: bind
+        source: ./secrets/internal_api_key.txt
+        target: /run/secrets/internal_api_key
+      - mysqld_run:/var/run/mysqld
+    cap_add:
+      - CAP_SYS_NICE
+    networks:
+      - sewio-net
+
+  # 예시: RTLS IO 컨테이너
+  rtls_io:
+    image: "quay.io/netaiy/sewio-uwb-rtls-io:3.1.0"
+    container_name: "sewio-uwb-rtls-io"
+    restart: always
+    environment:
+      JWT_SECRET_FILE: "/run/secrets/jwt_secret"
+      INTERNAL_API_KEY_FILE: "/run/secrets/internal_api_key"
+      WWW_HOST: "www"
+    ports:
+      - "5959:5959"
+    volumes:
+      - rtlsio_data:/home/rtlsio
+      - type: bind
+        source: ./secrets/jwt_secret.txt
+        target: /run/secrets/jwt_secret
+      - type: bind
+        source: ./secrets/internal_api_key.txt
+        target: /run/secrets/internal_api_key
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - sewio-net
+
+  # 예시: Redis
+  redis:
+    image: "quay.io/netaiy/sewio-uwb-redis:5.0.8"
+    container_name: "sewio-uwb-redis"
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - sewio-net
+
+  # 예시: phpMyAdmin
+  phpmyadmin:
+      image: "quay.io/netaiy/sewio-uwb-phpmyadmin:latest"
+      container_name: "sewio-uwb-phpmyadmin"
+      restart: always
+      environment:
+        PMA_HOST: "sewiodb"
+        PMA_PORT: "3306"
+        MYSQL_USER: "laravel_user"
+        MYSQL_PASSWORD_FILE: "/run/secrets/db_password"
+        MYSQL_ROOT_PASSWORD_FILE: "/run/secrets/db_root_password"
+        PMA_ABSOLUTE_URI: "/"
+        PMA_ABSOLUTE_URI_OLD: "/phpmyadmin-d/"
+      ports:
+        - "8081:80"
+      volumes:
+        - type: bind
+          source: ./secrets/db_password.txt
+          target: /run/secrets/db_password
+        - type: bind
+          source: ./secrets/db_root_password.txt
+          target: /run/secrets/db_root_password
+        # initContainer에서 사용하던 호스트 시스템 접근을 위한 볼륨
+        - type: bind
+          source: /proc
+          target: /host/proc
+        - type: bind
+          source: /sys
+          target: /host/sys
+      networks:
+        - sewio-net
+
+  # 예시: Core 서비스
+  www:
+    image: "quay.io/netaiy/sewio-uwb-core:3.1.0"
+    container_name: "www"
+    restart: always
+    command: 
+      - bash
+      - -c
+      - |
+        sed -i 's/\(\/var\/www\/html\/\)temporary-uploads\//\1sensmapserver\/svgs\/uploads\/temporary\//g' /var/www/html/studio/app/Http/Controllers/FileController.php && chown -R www-data:www-data /var/www/html/sensmapserver/svgs/uploads && exec docker-php-entrypoint /usr/bin/supervisord
+    environment:
+      LOG_CHANNEL: "stderr"
+      DB_HOST: "sewiodb"
+      DB_PORT: "3306"
+      DB_DATABASE: "rtls_main"
+      DB_USERNAME: "laravel_user"
+      DB_PASSWORD_FILE: "/run/secrets/db_password"
+      DB_HOST_SECOND: "sewiodb"
+      DB_PORT_SECOND: "3306"
+      DB_DATABASE_SECOND: "sensmapserver"
+      DB_USERNAME_SECOND: "laravel_user"
+      DB_PASSWORD_SECOND_FILE: "/run/secrets/db_password"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      PHPMYADMIN_HOST: "phpmyadmin"
+      PUBLISH_BROKER: "Disabled"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "5000:5000/tcp"
+      - "5001:5001/tcp"
+      - "5000:5000/udp"
+      - "5001:5001/udp"
+      - "5100:5100/udp"
+      - "5101:5101/udp"
+      - "6789:6789"
+      - "8000:8000"
+      - "8080:8080"
+    volumes:
+      # ConfigMap 볼륨들을 로컬 바인드 마운트로 변환
+      - type: bind
+        source: ./configs
+        target: /home/rtlsserver/migrate/configs
+      - type: bind
+        source: ./matrices/clock
+        target: /home/rtlsserver/migrate/matrices/clock
+      - type: bind
+        source: ./matrices/coefficient
+        target: /home/rtlsserver/migrate/matrices/coefficient
+      - type: bind
+        source: ./matrices/position
+        target: /home/rtlsserver/migrate/matrices/position
+      # 퍼시스턴트 볼륨들
+      - core_plans:/var/www/html/sensmapserver/svgs/uploads/plans
+      - core_temporary:/var/www/html/sensmapserver/svgs/uploads/temporary
+      - core_rtlsserver:/home/rtlsserver/persistent
+      - core_sewiortls:/home/sewiortls
+      - rtlsio_data:/home/rtlsio
+      # 시크릿 파일들
+      - type: bind
+        source: ./secrets/db_password.txt
+        target: /run/secrets/db_password
+      - type: bind
+        source: ./secrets/internal_api_key.txt
+        target: /run/secrets/internal_api_key
+      # 호스트 시스템 접근을 위한 볼륨
+      - type: bind
+        source: /proc
+        target: /host/proc
+      - type: bind
+        source: /sys
+        target: /host/sys
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    security_opt:
+      - "seccomp:unconfined"
+    user: "0:0"
+    depends_on:
+      - sewiodb
+      - redis
+    networks:
+      - sewio-net
+
+# 네트워크 및 볼륨 정의
+networks:
+  sewio-net:
+
+volumes:
+  db_data:
+  rtlsio_data:
+  mysqld_run:
+  core_plans:
+  core_temporary:
+  core_rtlsserver:
+  core_sewiortls:

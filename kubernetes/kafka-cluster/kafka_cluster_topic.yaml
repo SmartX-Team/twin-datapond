@@ -3,13 +3,13 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: fms-temphum
+  name: falcon-inference-input
   namespace: name-twin
   labels:
     strimzi.io/cluster: kafka-cluster
 spec:
-  partitions: 3
+  partitions: 1
   replicas: 3
   config:
     max.message.bytes: 20485760  # 약 20MB 메시지 크기
-    retention.ms: 204800000      # 1주일(7일) 보관
+    retention.ms: 3600000      # 1주일(7일) 보관 1시간 (3,600,000ms) 보관

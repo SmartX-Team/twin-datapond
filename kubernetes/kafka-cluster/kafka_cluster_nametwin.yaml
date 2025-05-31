@@ -126,7 +126,7 @@ spec:
       # advertised.listeners: PLAIN://:9092,EXTERNAL://<will-be-filled-by-strimzi-or-set-manually-if-needed>
     storage:
       type: persistent-claim
-      size: 10Gi
+      size: 2Ti
       deleteClaim: false
       class: ceph-block
     resources:
@@ -164,7 +164,7 @@ spec:
     replicas: 3
     storage:
       type: persistent-claim
-      size: 10Gi
+      size: 100Gi
       deleteClaim: false
       class: ceph-block
     resources:

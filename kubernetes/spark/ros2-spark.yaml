@@ -1,0 +1,59 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: lidar-data-processor
+  namespace: name-twin
+  annotations:
+    argocd.argoproj.io/compare-options: IgnoreExtraneous  
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  type: Python
+  pythonVersion: "3"
+  mode: cluster
+  image: "docker.io/ttyy441/my-spark:3.6.2" # 이전 단계에서 빌드한 새 이미지 태그
+  imagePullPolicy: Always
+  mainApplicationFile: local:///mnt/ceph-pvc/Spark_application/pointcloud_to_kafka.py
+  sparkVersion: "3.5.0" # Docker 이미지 내 Spark 버전(3.5.3)과 호환
+  restartPolicy:
+    type: OnFailure
+    onFailureRetries: 1
+    onFailureRetryInterval: 10
+    onSubmissionFailureRetries: 2
+    onSubmissionFailureRetryInterval: 10
+  driver:
+    cores: 1
+    coreLimit: "1200m"
+    memory: "1G"
+    labels:
+      version: "3.5.0" # 문자열로 통일 (일관성)
+    serviceAccount: spark-operator-sa
+    volumeMounts:
+      - name: ceph-pvc
+        mountPath: /mnt/ceph-pvc
+  executor:
+    cores: 1
+    instances: 1
+    memory: "4G"
+    labels:
+      version: "3.5.0" # 문자열로 통일 (일관성)
+    volumeMounts:
+      - name: ceph-pvc
+        mountPath: /mnt/ceph-pvc
+  deps:
+    jars:
+      # Delta Lake JAR 수정: Spark 3.5.x 와 호환되는 Delta Lake 3.3.1 사용
+      - local:///opt/spark/jars/delta-spark_2.12-3.3.1.jar 
+      - local:///opt/spark/jars/delta-storage-3.3.1.jar      
+      # Kafka Connector JARs (기존 유지 - Dockerfile에 포함된 버전과 일치)
+      - local:///opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.3.jar
+      - local:///opt/spark/jars/kafka-clients-3.5.2.jar
+      - local:///opt/spark/jars/commons-pool2-2.11.1.jar
+      - local:///opt/spark/jars/spark-token-provider-kafka-0-10_2.12-3.5.3.jar
+      
+      # Hadoop AWS JARs for MinIO/S3 (기존 유지 - Dockerfile에 포함된 버전과 일치)
+      - local:///opt/spark/jars/hadoop-aws-3.3.4.jar
+      - local:///opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
+  volumes:
+    - name: ceph-pvc
+      persistentVolumeClaim:
+        claimName: file-browser-pvc
