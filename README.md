@@ -25,6 +25,9 @@ The configurations range from actively used production deployments to deprecated
 > **🔄 Repository Evolution:**  
 > This repository is currently being reorganized and may be reclassified with a new name in the future to better reflect its expanded scope.
 
+![recent](https://github.com/user-attachments/assets/a2adbb84-9790-46f4-8d88-58454ca9e8db)
+
+
 ### ✨ Repository Characteristics
 
 - **📚 Master's Research Archive**: Complete collection of YAML files from thesis research
@@ -38,6 +41,7 @@ The configurations range from actively used production deployments to deprecated
 ```
 twin-datapond/
 ├── 📁 kubernetes/                    # K8S Deployment YAMLs
+│   ├── Spark/     # Includes practical K8S-based OTF-based data collection and processing deployments and examples.
 │   ├── Infra Deployment ~~/
 ├── 📁 examples/                      # Example Code & Experiments
 ├── 📁 docs/                         # Documentation
