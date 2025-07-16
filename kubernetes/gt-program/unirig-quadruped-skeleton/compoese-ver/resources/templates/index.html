@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>UniRig Automatic Rigging Service</h1>
+            <p class="subtitle">AI를 활용한 3D 모델 자동 리깅 서비스입니다. 정적 3D 모델을 업로드하면 자동으로 스켈레톤과 스키닝 웨이트가 적용된 애니메이션 준비 모델을 생성합니다.</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <h2>모델 업로드</h2>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" name="file" 
+                               accept="{% for fmt in supported_input_formats %}{{ fmt }}{% if not loop.last %},{% endif %}{% endfor %}" 
+                               style="display: none;" onchange="updateFileName()">
+                        <div class="upload-content">
+                            <div class="upload-icon">📁</div>
+                            <p>클릭하여 3D 모델 파일을 선택하세요</p>
+                            <p class="supported-formats">
+                                지원 형식: {% for fmt in supported_input_formats %}{{ fmt }}{% if not loop.last %}, {% endif %}{% endfor %}
+                            </p>
+                            <p id="fileName" class="selected-file"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>설정</h3>
+                        <div class="form-group">
+                            <label for="output_format">출력 형식:</label>
+                            <select name="output_format" id="output_format">
+                                {% for fmt in supported_output_formats %}
+                                <option value="{{ fmt.replace('.', '') }}"{% if fmt == '.glb' %} selected{% endif %}>
+                                    {{ fmt.upper().replace('.', '') }}{% if fmt == '.glb' %} (추천){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="high_quality" value="true">
+                                <span class="checkmark"></span>
+                                고품질 모드 (처리 시간 증가)
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">리깅 시작</button>
+                    </div>
+                </form>
+                
+                <div class="progress" id="progress">
+                    <div class="progress-content">
+                        <div class="spinner"></div>
+                        <h3>처리 중...</h3>
+                        <p>AI가 모델을 분석하고 스켈레톤을 생성하고 있습니다. 잠시만 기다려주세요.</p>
+                    </div>
+                </div>
+                
+                <div class="result" id="result"></div>
+            </section>
+
+            <section class="info-section">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>사용법</h3>
+                        <ol>
+                            <li>3D 모델 파일({% for fmt in supported_input_formats %}{{ fmt }}{% if not loop.last %}, {% endif %}{% endfor %})을 업로드합니다</li>
+                            <li>출력 형식과 품질을 선택합니다</li>
+                            <li>처리가 완료되면 리깅된 모델을 다운로드합니다</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>API 사용법</h3>
+                        <pre><code># curl을 사용한 예시
+curl -X POST "http://localhost:8000/rig/" \
+     -F "file=@your_model.obj" \
+     -F "output_format=glb" \
+     --output rigged_model.glb</code></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 UniRig Automatic Rigging Service. Powered by AI.</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
