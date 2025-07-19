@@ -12,6 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Seoul
 ENV PYTHONUNBUFFERED=1
 ENV CUDA_VISIBLE_DEVICES=0
+ENV GPU_DEVICE_ID=0
 
 # 시스템 의존성 설치
 RUN apt-get update && apt-get install -y \
@@ -50,6 +51,10 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://
 
 # UniRig 의존성 설치
 WORKDIR /app/unirig
+# bpy 버전 호환성 문제 해결
+RUN sed -i 's/bpy==4.2/bpy==4.0.0/g' requirements.txt
+# flash_attn 빌드를 위한 추가 의존성 설치
+RUN pip install --no-cache-dir packaging wheel setuptools
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 추가 CUDA 관련 패키지 설치
